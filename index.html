@@ -1,197 +1,451 @@
 <!DOCTYPE html>
-
-<html class="light" lang="en"><head>
+<html class="light" lang="en">
+<head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
 <title>ENGINE | Editorial AI</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;800&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <style>
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-        .ochre-gradient {
-            background: linear-gradient(135deg, #AF9071 0%, #D6B89D 100%);
-        }
-        .chat-container::-webkit-scrollbar {
-            width: 4px;
-        }
-        .chat-container::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        .chat-container::-webkit-scrollbar-thumb {
-            background: #dbe1ff;
-            border-radius: 10px;
-        }
-        .bot-bubble {
-            border-bottom-left-radius: 0 !important;
-            background-color: #222C4F;
-            color: white;
-        }
-        .user-bubble {
-            border-bottom-right-radius: 0 !important;
-            background-color: #CBAD91;
-            color: black;
-        }
-        body {
-            min-height: 100dvh;
-            background-color: #ffffff;
-        }
-    </style>
+    .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .ochre-gradient {
+        background: linear-gradient(135deg, #AF9071 0%, #D6B89D 100%);
+    }
+    .chat-container::-webkit-scrollbar { width: 4px; }
+    .chat-container::-webkit-scrollbar-track { background: transparent; }
+    .chat-container::-webkit-scrollbar-thumb { background: #dbe1ff; border-radius: 10px; }
+    .bot-bubble {
+        border-bottom-left-radius: 0 !important;
+        background-color: #222C4F;
+        color: white;
+    }
+    .user-bubble {
+        border-bottom-right-radius: 0 !important;
+        background-color: #CBAD91;
+        color: black;
+    }
+    body {
+        min-height: 100dvh;
+        background-color: #ffffff;
+    }
+
+    /* Attachment preview bar */
+    #attachment-preview {
+        display: none;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        margin-bottom: 6px;
+        font-size: 12px;
+        color: #475569;
+        font-family: 'Inter', sans-serif;
+    }
+    #attachment-preview.visible { display: flex; }
+    #attachment-preview img {
+        width: 36px;
+        height: 36px;
+        object-fit: cover;
+        border-radius: 6px;
+        border: 1px solid #e2e8f0;
+    }
+    #attachment-preview .attach-name {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-weight: 500;
+    }
+    #attachment-preview .attach-remove {
+        cursor: pointer;
+        color: #94a3b8;
+        font-size: 18px;
+        line-height: 1;
+        padding: 2px;
+        border-radius: 4px;
+        transition: color 0.15s;
+    }
+    #attachment-preview .attach-remove:hover { color: #ef4444; }
+
+    /* Typing dots animation */
+    @keyframes blink { 0%,80%,100%{opacity:0} 40%{opacity:1} }
+    .dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:#a0aec0; animation: blink 1.4s infinite; }
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+
+    /* Attached image inside bubble */
+    .bubble-image {
+        max-width: 220px;
+        border-radius: 8px;
+        margin-bottom: 8px;
+        border: 1px solid rgba(255,255,255,0.15);
+    }
+    .bubble-pdf {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(255,255,255,0.08);
+        border-radius: 8px;
+        padding: 6px 10px;
+        margin-bottom: 8px;
+        font-size: 12px;
+        font-family: 'Inter', sans-serif;
+    }
+</style>
 </head>
 <body class="font-body text-on-surface flex flex-col h-screen overflow-hidden">
+
 <!-- Header -->
 <header class="fixed top-0 w-full z-50 bg-[#0E1730] flex items-center justify-between px-6 h-16">
-<button class="text-[#e0c1a4] hover:text-[#e0c1a4] transition-colors scale-95 active:duration-150">
-<span class="material-symbols-outlined">menu</span>
-</button>
-<div class="text-xl font-bold tracking-[-0.02em] text-white font-headline uppercase">ENGINE</div>
-<button class="text-[#e0c1a4] hover:text-[#e0c1a4] transition-colors scale-95 active:duration-150">
-<span class="material-symbols-outlined">settings</span>
-</button>
+    <button class="text-[#e0c1a4] hover:text-[#e0c1a4] transition-colors scale-95 active:duration-150">
+        <span class="material-symbols-outlined">menu</span>
+    </button>
+    <div class="text-xl font-bold tracking-[-0.02em] text-white font-headline uppercase">ENGINE</div>
+    <button class="text-[#e0c1a4] hover:text-[#e0c1a4] transition-colors scale-95 active:duration-150">
+        <span class="material-symbols-outlined">settings</span>
+    </button>
 </header>
+
 <!-- Chat Canvas -->
-<!-- Added pb-48 to ensure space for both input field and bottom nav -->
 <main class="flex-1 overflow-y-auto chat-container pt-20 pb-48 px-4 md:px-8 max-w-4xl mx-auto w-full flex flex-col space-y-6" id="chat-canvas"></main>
+
 <!-- Bottom Navigation (Mobile) -->
 <nav class="md:hidden fixed bottom-0 w-full z-50 rounded-t-xl bg-white shadow-[0px_-10px_30px_rgba(18,26,52,0.05)] flex justify-around items-center h-20 px-4 pb-safe border-t border-slate-100">
-<a class="flex flex-col items-center justify-center text-[#af9071] font-bold transition-transform active:scale-95" href="#">
-<span class="material-symbols-outlined">chat_bubble</span>
-<span class="font-['Inter'] text-[10px] font-medium uppercase tracking-[0.05em]">Chat</span>
-</a>
-<a class="flex flex-col items-center justify-center text-slate-500 hover:opacity-80 transition-transform active:scale-95" href="#">
-<span class="material-symbols-outlined">history</span>
-<span class="font-['Inter'] text-[10px] font-medium uppercase tracking-[0.05em]">History</span>
-</a>
-<a class="flex flex-col items-center justify-center text-slate-500 hover:opacity-80 transition-transform active:scale-95" href="#">
-<span class="material-symbols-outlined">tune</span>
-<span class="font-['Inter'] text-[10px] font-medium uppercase tracking-[0.05em]">Settings</span>
-</a>
+    <a class="flex flex-col items-center justify-center text-[#af9071] font-bold transition-transform active:scale-95" href="#">
+        <span class="material-symbols-outlined">chat_bubble</span>
+        <span class="font-['Inter'] text-[10px] font-medium uppercase tracking-[0.05em]">Chat</span>
+    </a>
+    <a class="flex flex-col items-center justify-center text-slate-500 hover:opacity-80 transition-transform active:scale-95" href="#">
+        <span class="material-symbols-outlined">history</span>
+        <span class="font-['Inter'] text-[10px] font-medium uppercase tracking-[0.05em]">History</span>
+    </a>
+    <a class="flex flex-col items-center justify-center text-slate-500 hover:opacity-80 transition-transform active:scale-95" href="#">
+        <span class="material-symbols-outlined">tune</span>
+        <span class="font-['Inter'] text-[10px] font-medium uppercase tracking-[0.05em]">Settings</span>
+    </a>
 </nav>
+
 <!-- Input Area -->
-<!-- Positioned bottom-20 to sit exactly above the 20-unit (h-20) bottom nav -->
 <div class="fixed bottom-20 left-0 w-full px-4 pb-4 z-40 bg-white/80 backdrop-blur-sm">
-<div class="max-w-4xl mx-auto">
-<div class="bg-slate-50 border border-slate-100 rounded-2xl p-2 shadow-[0px_10px_30px_rgba(18,26,52,0.05)] flex items-center gap-2">
-<input class="flex-1 bg-white border-none focus:ring-0 rounded-xl px-6 py-4 font-body font-light text-on-surface placeholder:text-slate-400" id="user-input" placeholder="Compose a message..." type="text"/>
-<button class="ochre-gradient text-white w-12 h-12 rounded-xl flex items-center justify-center shadow-[0px_4px_15px_rgba(175,144,113,0.3)] transition-transform active:scale-90" id="send-button">
-<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">send</span>
-</button>
+    <div class="max-w-4xl mx-auto">
+
+        <!-- Attachment preview bar (shown when file is selected) -->
+        <div id="attachment-preview">
+            <span class="material-symbols-outlined" id="attach-icon" style="font-size:18px;color:#af9071">attach_file</span>
+            <img id="attach-thumb" src="" alt="" style="display:none"/>
+            <span class="attach-name" id="attach-name">archivo.pdf</span>
+            <span class="attach-remove material-symbols-outlined" id="attach-remove" title="Quitar adjunto">close</span>
+        </div>
+
+        <div class="bg-slate-50 border border-slate-100 rounded-2xl p-2 shadow-[0px_10px_30px_rgba(18,26,52,0.05)] flex items-center gap-2">
+
+            <!-- Hidden file inputs -->
+            <input type="file" id="pdf-input" accept="application/pdf" style="display:none"/>
+            <input type="file" id="image-input" accept="image/*" style="display:none"/>
+
+            <!-- PDF button -->
+            <button class="flex items-center justify-center w-10 h-10 rounded-xl text-slate-400 hover:text-[#af9071] hover:bg-white transition-all" id="pdf-btn" title="Adjuntar PDF">
+                <span class="material-symbols-outlined">picture_as_pdf</span>
+            </button>
+
+            <!-- Image button -->
+            <button class="flex items-center justify-center w-10 h-10 rounded-xl text-slate-400 hover:text-[#af9071] hover:bg-white transition-all" id="image-btn" title="Adjuntar imagen">
+                <span class="material-symbols-outlined">image</span>
+            </button>
+
+            <input class="flex-1 bg-white border-none focus:ring-0 rounded-xl px-6 py-4 font-body font-light text-on-surface placeholder:text-slate-400"
+                   id="user-input" placeholder="Compose a message..." type="text"/>
+
+            <button class="ochre-gradient text-white w-12 h-12 rounded-xl flex items-center justify-center shadow-[0px_4px_15px_rgba(175,144,113,0.3)] transition-transform active:scale-90" id="send-button">
+                <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">send</span>
+            </button>
+        </div>
+    </div>
 </div>
-</div>
-</div>
+
+<!-- ===== HIDDEN: upload file to Dify ===== -->
 <script>
-    const API_KEY = 'app-eApQYaNB74wAmRgNgWxytelf';
-    const API_URL = 'https://dify.engineconsulting.com.ar/v1/chat-messages';
-    const chatCanvas = document.getElementById('chat-canvas');
-    const userInput = document.getElementById('user-input');
-    const sendButton = document.getElementById('send-button');
+const API_KEY = 'app-eApQYaNB74wAmRgNgWxytelf';
+const API_URL = 'https://dify.engineconsulting.com.ar/v1/chat-messages';
+const UPLOAD_URL = 'https://dify.engineconsulting.com.ar/v1/files/upload';
+const DIFY_USER = 'usuario_web_unique';
 
-    function appendMessage(role, text) {
-        const wrapper = document.createElement('div');
-        wrapper.className = role === 'user' 
-            ? 'flex flex-col items-end self-end max-w-[85%]' 
-            : 'flex flex-col items-start max-w-[85%]';
-        
-        const bubbleClasses = role === 'user' ? 'user-bubble' : 'bot-bubble';
+const chatCanvas    = document.getElementById('chat-canvas');
+const userInput     = document.getElementById('user-input');
+const sendButton    = document.getElementById('send-button');
+const pdfBtn        = document.getElementById('pdf-btn');
+const imageBtn      = document.getElementById('image-btn');
+const pdfInput      = document.getElementById('pdf-input');
+const imageInput    = document.getElementById('image-input');
+const attachPreview = document.getElementById('attachment-preview');
+const attachThumb   = document.getElementById('attach-thumb');
+const attachName    = document.getElementById('attach-name');
+const attachIcon    = document.getElementById('attach-icon');
+const attachRemove  = document.getElementById('attach-remove');
 
-        wrapper.innerHTML = `
-            <div class="${bubbleClasses} px-6 py-4 rounded-xl shadow-sm">
-                <p class="font-body ${role === 'user' ? 'font-medium' : 'font-light'} text-lg leading-relaxed message-content">${text}</p>
-            </div>
-            <span class="mt-2 text-[10px] font-medium uppercase tracking-[0.05em] text-slate-500 font-label">
-                ${role === 'user' ? 'YOU' : 'ENGINE'} • NOW
-            </span>
-        `;
-        
-        chatCanvas.appendChild(wrapper);
-        chatCanvas.scrollTop = chatCanvas.scrollHeight;
-        return wrapper.querySelector('.message-content');
+// ── State ──────────────────────────────────────────────
+let pendingFile = null;   // { file, type: 'image'|'document', localUrl }
+let conversationId = '';  // maintained across turns for Dify memory
+
+// ── Attachment UI ──────────────────────────────────────
+function showPreview(file, type) {
+    attachName.textContent = file.name;
+    if (type === 'image') {
+        attachThumb.src = URL.createObjectURL(file);
+        attachThumb.style.display = 'block';
+        attachIcon.style.display = 'none';
+    } else {
+        attachThumb.style.display = 'none';
+        attachIcon.style.display = 'inline-block';
     }
+    attachPreview.classList.add('visible');
+}
 
-    async function sendMessage() {
-        const text = userInput.value.trim();
-        if (!text) return;
+function clearAttachment() {
+    pendingFile = null;
+    attachPreview.classList.remove('visible');
+    attachThumb.src = '';
+    attachThumb.style.display = 'none';
+    attachIcon.style.display = 'inline-block';
+    pdfInput.value = '';
+    imageInput.value = '';
+}
 
-        userInput.value = '';
-        appendMessage('user', text);
+pdfBtn.addEventListener('click', () => pdfInput.click());
+imageBtn.addEventListener('click', () => imageInput.click());
+attachRemove.addEventListener('click', clearAttachment);
 
-        const botMessageElement = appendMessage('bot', '...');
-        let fullResponse = '';
+pdfInput.addEventListener('change', () => {
+    const file = pdfInput.files[0];
+    if (!file) return;
+    pendingFile = { file, type: 'document', localUrl: null };
+    showPreview(file, 'document');
+});
 
-        try {
-            const response = await fetch(API_URL, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${API_KEY}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    "inputs": {},
-                    "query": text,
-                    "response_mode": "streaming",
-                    "user": "usuario_web_unique"
-                })
-            });
+imageInput.addEventListener('change', () => {
+    const file = imageInput.files[0];
+    if (!file) return;
+    const localUrl = URL.createObjectURL(file);
+    pendingFile = { file, type: 'image', localUrl };
+    showPreview(file, 'image');
+});
 
-            if (!response.ok) throw new Error('API request failed');
+// ── Upload file to Dify, returns file_id ──────────────
+async function uploadFileToDify(file, type) {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('user', DIFY_USER);
 
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            
-            botMessageElement.innerText = ''; 
+    const res = await fetch(UPLOAD_URL, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${API_KEY}` },
+        body: formData
+    });
 
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
+    if (!res.ok) throw new Error('File upload failed: ' + res.status);
+    const data = await res.json();
+    return data.id; // Dify returns { id, ... }
+}
 
-                const chunk = decoder.decode(value, { stream: true });
-                const lines = chunk.split('\n');
+// ── Append message bubble ──────────────────────────────
+function appendMessage(role, text, attachmentInfo) {
+    const wrapper = document.createElement('div');
+    wrapper.className = role === 'user'
+        ? 'flex flex-col items-end self-end max-w-[85%]'
+        : 'flex flex-col items-start max-w-[85%]';
 
-                for (const line of lines) {
-                    if (line.trim().startsWith('data:')) {
-                        try {
-                            const jsonString = line.trim().slice(5).trim();
-                            if (!jsonString) continue;
-                            const data = JSON.parse(jsonString);
-                    if (data.event === 'message' || data.event === 'agent_message') {
-                    let chunk = data.answer || '';
-                    fullResponse += chunk;
-                    
-                    // Intentar parsear si el fullResponse acumulado es un JSON válido
-                    try {
-                        const parsed = JSON.parse(fullResponse);
-                        if (parsed.messages && parsed.messages[0]?.text) {
-                            botMessageElement.innerText = parsed.messages[0].text;
-                        } else {
-                            botMessageElement.innerText = fullResponse;
-                        }
-                    } catch(e) {
-                        // Todavía no es JSON completo, mostrar como texto parcial
-                        botMessageElement.innerText = fullResponse;
-                    }
-                    
-                    chatCanvas.scrollTop = chatCanvas.scrollHeight;
-                }
-                        } catch (e) {
-                            console.error('Error parsing stream chunk', e);
-                        }
-                    }
-                }
-            }
-        } catch (error) {
-            console.error('Chat error:', error);
-            botMessageElement.innerText = "Apologies, but I encountered a disruption in our connection. Please ensure the service is available.";
-            botMessageElement.classList.add('text-red-400');
+    const bubbleClasses = role === 'user' ? 'user-bubble' : 'bot-bubble';
+
+    let attachmentHTML = '';
+    if (attachmentInfo) {
+        if (attachmentInfo.type === 'image' && attachmentInfo.localUrl) {
+            attachmentHTML = `<img src="${attachmentInfo.localUrl}" class="bubble-image" alt="imagen adjunta"/>`;
+        } else if (attachmentInfo.type === 'document') {
+            attachmentHTML = `
+                <div class="bubble-pdf">
+                    <span class="material-symbols-outlined" style="font-size:16px">picture_as_pdf</span>
+                    <span>${attachmentInfo.name}</span>
+                </div>`;
         }
     }
 
-    sendButton.addEventListener('click', sendMessage);
-    userInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') sendMessage();
-    });
+    wrapper.innerHTML = `
+        <div class="${bubbleClasses} px-6 py-4 rounded-xl shadow-sm">
+            ${attachmentHTML}
+            <p class="font-body ${role === 'user' ? 'font-medium' : 'font-light'} text-lg leading-relaxed message-content">${text}</p>
+        </div>
+        <span class="mt-2 text-[10px] font-medium uppercase tracking-[0.05em] text-slate-500 font-label">
+            ${role === 'user' ? 'YOU' : 'ENGINE'} • NOW
+        </span>
+    `;
+
+    chatCanvas.appendChild(wrapper);
+    chatCanvas.scrollTop = chatCanvas.scrollHeight;
+    return wrapper.querySelector('.message-content');
+}
+
+// Typing indicator bubble
+function appendTyping() {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'flex flex-col items-start max-w-[85%]';
+    wrapper.id = 'typing-indicator';
+    wrapper.innerHTML = `
+        <div class="bot-bubble px-6 py-4 rounded-xl shadow-sm flex items-center gap-1" style="min-width:60px">
+            <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        </div>`;
+    chatCanvas.appendChild(wrapper);
+    chatCanvas.scrollTop = chatCanvas.scrollHeight;
+}
+function removeTyping() {
+    const el = document.getElementById('typing-indicator');
+    if (el) el.remove();
+}
+
+// ── Parse Dify answer (handles plain text AND JSON wrapper) ──
+function parseAnswer(raw) {
+    const trimmed = raw.trim();
+    if (!trimmed.startsWith('{') && !trimmed.startsWith('[')) return raw;
+    try {
+        const parsed = JSON.parse(trimmed);
+        // Pattern: { "messages": [{ "text": "...", ... }] }
+        if (parsed.messages && Array.isArray(parsed.messages)) {
+            return parsed.messages.map(m => m.text || '').join('\n');
+        }
+        // Pattern: { "text": "..." }
+        if (parsed.text) return parsed.text;
+        // Pattern: { "answer": "..." }
+        if (parsed.answer) return parsed.answer;
+        // Fallback: stringify nicely
+        return JSON.stringify(parsed, null, 2);
+    } catch {
+        return raw; // not valid JSON, return as-is
+    }
+}
+
+// ── Send message ───────────────────────────────────────
+async function sendMessage() {
+    const text = userInput.value.trim();
+    const fileSnapshot = pendingFile; // capture before clearing
+
+    if (!text && !fileSnapshot) return;
+
+    userInput.value = '';
+    clearAttachment();
+
+    // Show user bubble
+    const userAttachInfo = fileSnapshot
+        ? { type: fileSnapshot.type, localUrl: fileSnapshot.localUrl, name: fileSnapshot.file?.name }
+        : null;
+    appendMessage('user', text || '(archivo adjunto)', userAttachInfo);
+
+    // Show typing indicator
+    appendTyping();
+
+    let fullResponse = '';
+    let botMessageElement = null;
+
+    try {
+        // Build request body
+        const body = {
+            inputs: {},
+            query: text || 'Procesá el archivo adjunto.',
+            response_mode: 'streaming',
+            user: DIFY_USER,
+            conversation_id: conversationId || undefined
+        };
+
+        // If there's a file, upload it first then attach
+        if (fileSnapshot) {
+            const fileId = await uploadFileToDify(fileSnapshot.file, fileSnapshot.type);
+            body.files = [{
+                type: fileSnapshot.type,           // 'image' | 'document'
+                transfer_method: 'local_file',
+                upload_file_id: fileId
+            }];
+        }
+
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${API_KEY}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(body)
+        });
+
+        if (!response.ok) throw new Error('API request failed: ' + response.status);
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = chunk.split('\n');
+
+            for (const line of lines) {
+                if (!line.trim().startsWith('data:')) continue;
+                try {
+                    const jsonString = line.trim().slice(5).trim();
+                    if (!jsonString) continue;
+                    const data = JSON.parse(jsonString);
+
+                    // Save conversation_id for memory across turns
+                    if (data.conversation_id) conversationId = data.conversation_id;
+
+                    if (data.event === 'message' || data.event === 'agent_message') {
+                        fullResponse += data.answer || '';
+
+                        // First chunk: remove typing indicator and create bot bubble
+                        if (!botMessageElement) {
+                            removeTyping();
+                            botMessageElement = appendMessage('bot', '');
+                        }
+
+                        // Try to parse JSON wrapper; stream partial text otherwise
+                        botMessageElement.innerText = parseAnswer(fullResponse);
+                        chatCanvas.scrollTop = chatCanvas.scrollHeight;
+                    }
+
+                    if (data.event === 'message_end') {
+                        // Final pass: ensure fully parsed answer is shown
+                        if (botMessageElement) {
+                            botMessageElement.innerText = parseAnswer(fullResponse);
+                        }
+                    }
+
+                } catch (e) {
+                    console.error('Stream parse error:', e);
+                }
+            }
+        }
+
+        // Edge case: stream ended with no message events
+        if (!botMessageElement) {
+            removeTyping();
+            appendMessage('bot', parseAnswer(fullResponse) || 'Sin respuesta.');
+        }
+
+    } catch (error) {
+        console.error('Chat error:', error);
+        removeTyping();
+        if (!botMessageElement) botMessageElement = appendMessage('bot', '');
+        botMessageElement.innerText = 'Hubo un error en la conexión. Por favor, intentá de nuevo.';
+        botMessageElement.classList.add('text-red-400');
+    }
+}
+
+sendButton.addEventListener('click', sendMessage);
+userInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
 </script>
-</body></html>
+</body>
+</html>
