@@ -157,11 +157,25 @@
                             const jsonString = line.trim().slice(5).trim();
                             if (!jsonString) continue;
                             const data = JSON.parse(jsonString);
-                            if (data.event === 'message' || data.event === 'agent_message') {
-                                fullResponse += data.answer || '';
-                                botMessageElement.innerText = fullResponse;
-                                chatCanvas.scrollTop = chatCanvas.scrollHeight;
-                            }
+                    if (data.event === 'message' || data.event === 'agent_message') {
+                    let chunk = data.answer || '';
+                    fullResponse += chunk;
+                    
+                    // Intentar parsear si el fullResponse acumulado es un JSON válido
+                    try {
+                        const parsed = JSON.parse(fullResponse);
+                        if (parsed.messages && parsed.messages[0]?.text) {
+                            botMessageElement.innerText = parsed.messages[0].text;
+                        } else {
+                            botMessageElement.innerText = fullResponse;
+                        }
+                    } catch(e) {
+                        // Todavía no es JSON completo, mostrar como texto parcial
+                        botMessageElement.innerText = fullResponse;
+                    }
+                    
+                    chatCanvas.scrollTop = chatCanvas.scrollHeight;
+                }
                         } catch (e) {
                             console.error('Error parsing stream chunk', e);
                         }
