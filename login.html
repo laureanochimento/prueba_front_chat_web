@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+  <title>ENGINE | Acceso</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com" rel="preconnect"/>
+  <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;800&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    body {
+      min-height: 100dvh;
+      background-color: #0E1730;
+      font-family: 'Inter', sans-serif;
+    }
+    .ochre-gradient {
+      background: linear-gradient(135deg, #AF9071 0%, #D6B89D 100%);
+    }
+    .input-field {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: white;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .input-field:focus {
+      outline: none;
+      border-color: #AF9071;
+      background: rgba(255,255,255,0.08);
+    }
+    .input-field::placeholder { color: rgba(255,255,255,0.3); }
+    .error-box {
+      display: none;
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.3);
+      color: #fca5a5;
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-size: 14px;
+      align-items: center;
+      gap: 8px;
+    }
+    .error-box.visible { display: flex; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+    .card { animation: fadeIn 0.4s ease; }
+  </style>
+</head>
+<body class="flex items-center justify-center px-4">
+
+  <div class="card w-full max-w-md">
+
+    <!-- Logo -->
+    <div class="text-center mb-10">
+      <div class="text-3xl font-extrabold tracking-[-0.02em] text-white uppercase mb-2">ENGINE</div>
+      <p class="text-sm text-slate-400 font-light">Ingresá con tu cuenta para continuar</p>
+    </div>
+
+    <!-- Card -->
+    <div class="bg-[#162040] rounded-2xl p-8 shadow-[0px_20px_60px_rgba(0,0,0,0.4)]">
+
+      <!-- Error box -->
+      <div class="error-box mb-6" id="error-box">
+        <span class="material-symbols-outlined" style="font-size:18px">error</span>
+        <span id="error-msg">Usuario o contraseña incorrectos.</span>
+      </div>
+
+      <!-- Usuario -->
+      <div class="mb-5">
+        <label class="block text-xs font-medium uppercase tracking-widest text-slate-400 mb-2">Usuario</label>
+        <input
+          class="input-field w-full rounded-xl px-4 py-3 text-sm"
+          id="username"
+          type="email"
+          placeholder="tu@email.com"
+          autocomplete="username"
+        />
+      </div>
+
+      <!-- Contraseña -->
+      <div class="mb-8">
+        <label class="block text-xs font-medium uppercase tracking-widest text-slate-400 mb-2">Contraseña</label>
+        <div class="relative">
+          <input
+            class="input-field w-full rounded-xl px-4 py-3 text-sm pr-12"
+            id="password"
+            type="password"
+            placeholder="••••••••"
+            autocomplete="current-password"
+          />
+          <button
+            class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+            id="toggle-pass"
+            type="button"
+            tabindex="-1"
+          >
+            <span class="material-symbols-outlined" id="eye-icon" style="font-size:20px">visibility</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Botón -->
+      <button
+        class="ochre-gradient w-full py-3 rounded-xl text-white font-semibold text-sm tracking-wide shadow-[0px_4px_20px_rgba(175,144,113,0.35)] transition-all active:scale-95 flex items-center justify-center gap-2"
+        id="login-btn"
+      >
+        <span id="btn-text">Ingresar</span>
+        <span class="material-symbols-outlined" id="btn-icon" style="font-size:18px">arrow_forward</span>
+        <svg id="btn-spinner" class="hidden animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+        </svg>
+      </button>
+
+    </div>
+
+    <!-- Footer -->
+    <p class="text-center text-xs text-slate-600 mt-8">
+      © 2024 Engine Consulting · Todos los derechos reservados
+    </p>
+
+  </div>
+
+  <script>
+    const loginBtn    = document.getElementById('login-btn');
+    const usernameEl  = document.getElementById('username');
+    const passwordEl  = document.getElementById('password');
+    const errorBox    = document.getElementById('error-box');
+    const errorMsg    = document.getElementById('error-msg');
+    const btnText     = document.getElementById('btn-text');
+    const btnIcon     = document.getElementById('btn-icon');
+    const btnSpinner  = document.getElementById('btn-spinner');
+    const togglePass  = document.getElementById('toggle-pass');
+    const eyeIcon     = document.getElementById('eye-icon');
+
+    // Mostrar / ocultar contraseña
+    togglePass.addEventListener('click', () => {
+      const isPassword = passwordEl.type === 'password';
+      passwordEl.type = isPassword ? 'text' : 'password';
+      eyeIcon.textContent = isPassword ? 'visibility_off' : 'visibility';
+    });
+
+    function showError(msg) {
+      errorMsg.textContent = msg;
+      errorBox.classList.add('visible');
+    }
+
+    function hideError() {
+      errorBox.classList.remove('visible');
+    }
+
+    function setLoading(loading) {
+      loginBtn.disabled = loading;
+      btnText.textContent = loading ? 'Verificando...' : 'Ingresar';
+      btnIcon.classList.toggle('hidden', loading);
+      btnSpinner.classList.toggle('hidden', !loading);
+    }
+
+    async function doLogin() {
+      hideError();
+
+      const username = usernameEl.value.trim();
+      const password = passwordEl.value;
+
+      if (!username || !password) {
+        showError('Por favor completá usuario y contraseña.');
+        return;
+      }
+
+      setLoading(true);
+
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+
+        const data = await res.json();
+
+        if (res.ok && data.token) {
+          // Guardar token y redirigir al chatbot
+          sessionStorage.setItem('engine_token', data.token);
+          sessionStorage.setItem('engine_user', data.username);
+          window.location.href = '/index.html';
+        } else {
+          showError(data.error || 'Error al iniciar sesión.');
+        }
+
+      } catch (err) {
+        showError('No se pudo conectar. Intentá de nuevo.');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loginBtn.addEventListener('click', doLogin);
+    passwordEl.addEventListener('keypress', (e) => { if (e.key === 'Enter') doLogin(); });
+    usernameEl.addEventListener('keypress', (e) => { if (e.key === 'Enter') passwordEl.focus(); });
+  </script>
+
+</body>
+</html>
