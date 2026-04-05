@@ -4,521 +4,227 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
 <title>ENGINE | Editorial AI</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"><\/script>
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;800&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <style>
-    .material-symbols-outlined {
-        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-    }
-    .ochre-gradient {
-        background: linear-gradient(135deg, #AF9071 0%, #D6B89D 100%);
-    }
-    .chat-container::-webkit-scrollbar { width: 4px; }
-    .chat-container::-webkit-scrollbar-track { background: transparent; }
-    .chat-container::-webkit-scrollbar-thumb { background: #dbe1ff; border-radius: 10px; }
-    .bot-bubble {
-        border-bottom-left-radius: 0 !important;
-        background-color: #222C4F;
-        color: white;
-    }
-    .user-bubble {
-        border-bottom-right-radius: 0 !important;
-        background-color: #CBAD91;
-        color: black;
-    }
-    body {
-        min-height: 100dvh;
-        background-color: #ffffff;
-    }
-
-    /* Attachment preview bar */
-    #attachment-preview {
-        display: none;
-        align-items: center;
-        gap: 8px;
-        padding: 6px 12px;
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        margin-bottom: 6px;
-        font-size: 12px;
-        color: #475569;
-        font-family: 'Inter', sans-serif;
-    }
-    #attachment-preview.visible { display: flex; }
-    #attachment-preview img {
-        width: 36px;
-        height: 36px;
-        object-fit: cover;
-        border-radius: 6px;
-        border: 1px solid #e2e8f0;
-    }
-    #attachment-preview .attach-name {
-        flex: 1;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        font-weight: 500;
-    }
-    #attachment-preview .attach-remove {
-        cursor: pointer;
-        color: #94a3b8;
-        font-size: 18px;
-        line-height: 1;
-        padding: 2px;
-        border-radius: 4px;
-        transition: color 0.15s;
-    }
-    #attachment-preview .attach-remove:hover { color: #ef4444; }
-
-    /* Typing dots animation */
-    @keyframes blink { 0%,80%,100%{opacity:0} 40%{opacity:1} }
-    .dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:#a0aec0; animation: blink 1.4s infinite; }
-    .dot:nth-child(2) { animation-delay: 0.2s; }
-    .dot:nth-child(3) { animation-delay: 0.4s; }
-
-    /* Attached image inside bubble */
-    .bubble-image {
-        max-width: 220px;
-        border-radius: 8px;
-        margin-bottom: 8px;
-        border: 1px solid rgba(255,255,255,0.15);
-    }
-    .bubble-pdf {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        background: rgba(255,255,255,0.08);
-        border-radius: 8px;
-        padding: 6px 10px;
-        margin-bottom: 8px;
-        font-size: 12px;
-        font-family: 'Inter', sans-serif;
-    }
-
-    /* Toast de sesión por expirar */
-    #session-toast {
-        display: none;
-        position: fixed;
-        bottom: 100px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: #1e293b;
-        color: #fbbf24;
-        padding: 10px 20px;
-        border-radius: 12px;
-        font-size: 13px;
-        font-family: 'Inter', sans-serif;
-        z-index: 9999;
-        white-space: nowrap;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-        border: 1px solid rgba(251,191,36,0.2);
-    }
-    #session-toast.visible { display: block; }
+.material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24}
+.ochre-gradient{background:linear-gradient(135deg,#AF9071 0%,#D6B89D 100%)}
+.chat-container::-webkit-scrollbar{width:4px}
+.chat-container::-webkit-scrollbar-track{background:transparent}
+.chat-container::-webkit-scrollbar-thumb{background:#dbe1ff;border-radius:10px}
+.bot-bubble{border-bottom-left-radius:0!important;background-color:#222C4F;color:white}
+.user-bubble{border-bottom-right-radius:0!important;background-color:#CBAD91;color:black}
+body{min-height:100dvh;background-color:#ffffff}
+#attachment-preview{display:none;align-items:center;gap:8px;padding:6px 12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;margin-bottom:6px;font-size:12px;color:#475569;font-family:'Inter',sans-serif}
+#attachment-preview.visible{display:flex}
+#attachment-preview img{width:36px;height:36px;object-fit:cover;border-radius:6px;border:1px solid #e2e8f0}
+.attach-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+.attach-remove{cursor:pointer;color:#94a3b8;font-size:18px;line-height:1;padding:2px;border-radius:4px;transition:color .15s}
+.attach-remove:hover{color:#ef4444}
+@keyframes blink{0%,80%,100%{opacity:0}40%{opacity:1}}
+.dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#a0aec0;animation:blink 1.4s infinite}
+.dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
+.bubble-image{max-width:220px;border-radius:8px;margin-bottom:8px;border:1px solid rgba(255,255,255,.15)}
+.bubble-pdf{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.08);border-radius:8px;padding:6px 10px;margin-bottom:8px;font-size:12px;font-family:'Inter',sans-serif}
+#session-toast{display:none;position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fbbf24;padding:10px 20px;border-radius:12px;font-size:13px;font-family:'Inter',sans-serif;z-index:9999;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.3);border:1px solid rgba(251,191,36,.2)}
+#session-toast.visible{display:block}
+#pass-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center;padding:16px}
+#pass-modal-overlay.open{display:flex}
+.pass-input{width:100%;border:1px solid #e2e8f0;border-radius:12px;padding:10px 16px;font-size:14px;outline:none;box-sizing:border-box;font-family:'Inter',sans-serif;transition:border-color .2s}
+.pass-input:focus{border-color:#AF9071}
+.pass-label{display:block;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.1em;color:#94a3b8;margin-bottom:8px}
 </style>
 </head>
 <body class="font-body text-on-surface flex flex-col h-screen overflow-hidden">
 
-<!-- Toast aviso sesión -->
-<div id="session-toast">⚠️ Tu sesión expirará en 2 minutos por inactividad</div>
+<div id="pass-modal-overlay">
+  <div style="background:white;border-radius:20px;padding:32px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.2);font-family:'Inter',sans-serif">
+    <div style="display:flex;align-items:center;margin-bottom:24px">
+      <h3 style="font-weight:700;font-size:18px;color:#0E1730;flex:1">Cambiar contrasena</h3>
+      <button id="pass-modal-close" style="color:#94a3b8;cursor:pointer;background:none;border:none;line-height:1"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div id="cp-error" style="display:none;background:#fef2f2;border:1px solid #fecaca;color:#dc2626;border-radius:12px;padding:12px 16px;font-size:13px;margin-bottom:16px"></div>
+    <div id="cp-success" style="display:none;background:#f0fdf4;border:1px solid #86efac;color:#16a34a;border-radius:12px;padding:12px 16px;font-size:13px;margin-bottom:16px"></div>
+    <div style="margin-bottom:16px"><label class="pass-label">Contrasena actual</label><input id="cp-current" class="pass-input" type="password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;"/></div>
+    <div style="margin-bottom:16px"><label class="pass-label">Nueva contrasena</label><input id="cp-new" class="pass-input" type="password" placeholder="Minimo 8 caracteres"/></div>
+    <div style="margin-bottom:24px"><label class="pass-label">Confirmar nueva contrasena</label><input id="cp-confirm" class="pass-input" type="password" placeholder="Repeti la contrasena"/></div>
+    <div style="display:flex;gap:12px">
+      <button id="cp-cancel" style="flex:1;border:1px solid #e2e8f0;color:#64748b;padding:12px;border-radius:12px;font-size:14px;font-weight:500;cursor:pointer;background:white;font-family:'Inter',sans-serif">Cancelar</button>
+      <button id="cp-save" style="flex:1;background:linear-gradient(135deg,#AF9071,#D6B89D);color:white;padding:12px;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;border:none;display:flex;align-items:center;justify-content:center;gap:8px;font-family:'Inter',sans-serif">
+        <span id="cp-save-text">Guardar</span>
+        <svg id="cp-spinner" class="hidden animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>
+      </button>
+    </div>
+  </div>
+</div>
 
-<!-- Header -->
+<div id="session-toast">Atencion: Tu sesion expirara en 2 minutos por inactividad</div>
+
 <header class="fixed top-0 w-full z-50 bg-[#0E1730] flex items-center justify-between px-6 h-16">
-    <button class="text-[#e0c1a4] hover:text-[#e0c1a4] transition-colors scale-95 active:duration-150">
-        <span class="material-symbols-outlined">menu</span>
-    </button>
+    <button class="text-[#e0c1a4] hover:text-[#e0c1a4] transition-colors scale-95 active:duration-150"><span class="material-symbols-outlined">menu</span></button>
     <div class="text-xl font-bold tracking-[-0.02em] text-white font-headline uppercase">ENGINE</div>
-    <button
-        class="text-[#e0c1a4] hover:text-[#e0c1a4] transition-colors scale-95 active:duration-150"
-        id="logout-btn"
-        title="Cerrar sesión"
-    >
-        <span class="material-symbols-outlined">logout</span>
-    </button>
+    <div class="flex items-center gap-3">
+        <button class="text-[#e0c1a4] hover:text-[#e0c1a4] transition-colors scale-95 active:duration-150" id="change-pass-btn" title="Cambiar contrasena"><span class="material-symbols-outlined">settings</span></button>
+        <button class="text-[#e0c1a4] hover:text-red-400 transition-colors scale-95 active:duration-150" id="logout-btn" title="Cerrar sesion"><span class="material-symbols-outlined">logout</span></button>
+    </div>
 </header>
 
-<!-- Chat Canvas -->
 <main class="flex-1 overflow-y-auto chat-container pt-20 pb-48 px-4 md:px-8 max-w-4xl mx-auto w-full flex flex-col space-y-6" id="chat-canvas"></main>
 
-<!-- Bottom Navigation (Mobile) -->
 <nav class="md:hidden fixed bottom-0 w-full z-50 rounded-t-xl bg-white shadow-[0px_-10px_30px_rgba(18,26,52,0.05)] flex justify-around items-center h-20 px-4 pb-safe border-t border-slate-100">
-    <a class="flex flex-col items-center justify-center text-[#af9071] font-bold transition-transform active:scale-95" href="#">
-        <span class="material-symbols-outlined">chat_bubble</span>
-        <span class="font-['Inter'] text-[10px] font-medium uppercase tracking-[0.05em]">Chat</span>
-    </a>
-    <a class="flex flex-col items-center justify-center text-slate-500 hover:opacity-80 transition-transform active:scale-95" href="#">
-        <span class="material-symbols-outlined">history</span>
-        <span class="font-['Inter'] text-[10px] font-medium uppercase tracking-[0.05em]">History</span>
-    </a>
-    <a class="flex flex-col items-center justify-center text-slate-500 hover:opacity-80 transition-transform active:scale-95" href="#">
-        <span class="material-symbols-outlined">tune</span>
-        <span class="font-['Inter'] text-[10px] font-medium uppercase tracking-[0.05em]">Settings</span>
-    </a>
+    <a class="flex flex-col items-center justify-center text-[#af9071] font-bold transition-transform active:scale-95" href="#"><span class="material-symbols-outlined">chat_bubble</span><span class="font-['Inter'] text-[10px] font-medium uppercase tracking-[0.05em]">Chat</span></a>
+    <a class="flex flex-col items-center justify-center text-slate-500 hover:opacity-80 transition-transform active:scale-95" href="#"><span class="material-symbols-outlined">history</span><span class="font-['Inter'] text-[10px] font-medium uppercase tracking-[0.05em]">History</span></a>
+    <a class="flex flex-col items-center justify-center text-slate-500 hover:opacity-80 transition-transform active:scale-95" href="#" id="mobile-settings-btn"><span class="material-symbols-outlined">tune</span><span class="font-['Inter'] text-[10px] font-medium uppercase tracking-[0.05em]">Settings</span></a>
 </nav>
 
-<!-- Input Area -->
 <div class="fixed bottom-20 left-0 w-full px-4 pb-4 z-40 bg-white/80 backdrop-blur-sm">
     <div class="max-w-4xl mx-auto">
-
-        <!-- Attachment preview bar (shown when file is selected) -->
         <div id="attachment-preview">
             <span class="material-symbols-outlined" id="attach-icon" style="font-size:18px;color:#af9071">attach_file</span>
             <img id="attach-thumb" src="" alt="" style="display:none"/>
             <span class="attach-name" id="attach-name">archivo.pdf</span>
-            <span class="attach-remove material-symbols-outlined" id="attach-remove" title="Quitar adjunto">close</span>
+            <span class="attach-remove material-symbols-outlined" id="attach-remove">close</span>
         </div>
-
         <div class="bg-slate-50 border border-slate-100 rounded-2xl p-2 shadow-[0px_10px_30px_rgba(18,26,52,0.05)] flex items-center gap-2">
-
-            <!-- Hidden file inputs -->
             <input type="file" id="pdf-input" accept="application/pdf" style="display:none"/>
             <input type="file" id="image-input" accept="image/*" style="display:none"/>
-
-            <!-- PDF button -->
-            <button class="flex items-center justify-center w-10 h-10 rounded-xl text-slate-400 hover:text-[#af9071] hover:bg-white transition-all" id="pdf-btn" title="Adjuntar PDF">
-                <span class="material-symbols-outlined">picture_as_pdf</span>
-            </button>
-
-            <!-- Image button -->
-            <button class="flex items-center justify-center w-10 h-10 rounded-xl text-slate-400 hover:text-[#af9071] hover:bg-white transition-all" id="image-btn" title="Adjuntar imagen">
-                <span class="material-symbols-outlined">image</span>
-            </button>
-
-            <input class="flex-1 bg-white border-none focus:ring-0 rounded-xl px-6 py-4 font-body font-light text-on-surface placeholder:text-slate-400"
-                   id="user-input" placeholder="Compose a message..." type="text"/>
-
-            <button class="ochre-gradient text-white w-12 h-12 rounded-xl flex items-center justify-center shadow-[0px_4px_15px_rgba(175,144,113,0.3)] transition-transform active:scale-90" id="send-button">
-                <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">send</span>
-            </button>
+            <button class="flex items-center justify-center w-10 h-10 rounded-xl text-slate-400 hover:text-[#af9071] hover:bg-white transition-all" id="pdf-btn"><span class="material-symbols-outlined">picture_as_pdf</span></button>
+            <button class="flex items-center justify-center w-10 h-10 rounded-xl text-slate-400 hover:text-[#af9071] hover:bg-white transition-all" id="image-btn"><span class="material-symbols-outlined">image</span></button>
+            <input class="flex-1 bg-white border-none focus:ring-0 rounded-xl px-6 py-4 font-body font-light text-on-surface placeholder:text-slate-400" id="user-input" placeholder="Compose a message..." type="text"/>
+            <button class="ochre-gradient text-white w-12 h-12 rounded-xl flex items-center justify-center shadow-[0px_4px_15px_rgba(175,144,113,0.3)] transition-transform active:scale-90" id="send-button"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">send</span></button>
         </div>
     </div>
 </div>
 
 <script>
-// ═══════════════════════════════════════════════════════════
-// PROTECCIÓN DE SESIÓN + TIMER DE INACTIVIDAD (15 minutos)
-// ═══════════════════════════════════════════════════════════
+const SESSION_KEY='engine_token';
+const TIMEOUT_MS=15*60*1000;
+const WARNING_MS=13*60*1000;
 
-const SESSION_KEY  = 'engine_token';
-const USER_KEY     = 'engine_user';
-const TIMEOUT_MS   = 15 * 60 * 1000; // 15 minutos
-const WARNING_MS   = 13 * 60 * 1000; // aviso a los 13 min
-const SECRET       = 'engine-secret-2024';
+function logout(r){sessionStorage.removeItem(SESSION_KEY);sessionStorage.removeItem('engine_user');window.location.href='/login.html'+(r?'?msg='+r:'');}
+function validateToken(t){if(!t)return false;try{const[e]=t.split('.');const p=JSON.parse(atob(e));return Date.now()<=p.exp;}catch{return false;}}
+function getPayload(){try{const[e]=(sessionStorage.getItem(SESSION_KEY)||'').split('.');return JSON.parse(atob(e));}catch{return {};}}
 
-function logout(reason) {
-    sessionStorage.removeItem(SESSION_KEY);
-    sessionStorage.removeItem(USER_KEY);
-    window.location.href = '/login.html' + (reason ? '?msg=' + reason : '');
-}
+const tok=sessionStorage.getItem(SESSION_KEY);
+if(!validateToken(tok))logout('expired');
 
-function validateToken(token) {
-    if (!token) return false;
-    try {
-        const [encoded] = token.split('.');
-        const payload = JSON.parse(atob(encoded));
-        if (Date.now() > payload.exp) return false;
-        return true;
-    } catch {
-        return false;
-    }
-}
+let wT,lT;
+const sToast=document.getElementById('session-toast');
+function resetTimer(){clearTimeout(wT);clearTimeout(lT);sToast.classList.remove('visible');wT=setTimeout(()=>sToast.classList.add('visible'),WARNING_MS);lT=setTimeout(()=>logout('inactive'),TIMEOUT_MS);}
+['mousemove','keydown','click','touchstart','scroll'].forEach(e=>document.addEventListener(e,resetTimer,{passive:true}));
+document.getElementById('logout-btn').addEventListener('click',()=>logout('manual'));
+resetTimer();
 
-// Verificar sesión al cargar
-const token = sessionStorage.getItem(SESSION_KEY);
-if (!validateToken(token)) {
-    logout('expired');
-}
-
-// Timer de inactividad
-let warningTimer;
-let logoutTimer;
-const sessionToast = document.getElementById('session-toast');
-
-function resetInactivityTimer() {
-    clearTimeout(warningTimer);
-    clearTimeout(logoutTimer);
-    sessionToast.classList.remove('visible');
-
-    warningTimer = setTimeout(() => {
-        sessionToast.classList.add('visible');
-    }, WARNING_MS);
-
-    logoutTimer = setTimeout(() => {
-        logout('inactive');
-    }, TIMEOUT_MS);
-}
-
-// Eventos que reinician el timer
-['mousemove', 'keydown', 'click', 'touchstart', 'scroll'].forEach(evt => {
-    document.addEventListener(evt, resetInactivityTimer, { passive: true });
+// --- Modal contrasena ---
+const passModal=document.getElementById('pass-modal-overlay');
+const cpErr=document.getElementById('cp-error');
+const cpOk=document.getElementById('cp-success');
+function openPass(){['cp-current','cp-new','cp-confirm'].forEach(id=>document.getElementById(id).value='');cpErr.style.display='none';cpOk.style.display='none';passModal.classList.add('open');}
+function closePass(){passModal.classList.remove('open');}
+document.getElementById('change-pass-btn').addEventListener('click',openPass);
+document.getElementById('mobile-settings-btn').addEventListener('click',openPass);
+document.getElementById('pass-modal-close').addEventListener('click',closePass);
+document.getElementById('cp-cancel').addEventListener('click',closePass);
+passModal.addEventListener('click',e=>{if(e.target===passModal)closePass();});
+document.getElementById('cp-save').addEventListener('click',async()=>{
+  cpErr.style.display='none';cpOk.style.display='none';
+  const cur=document.getElementById('cp-current').value;
+  const nw=document.getElementById('cp-new').value;
+  const conf=document.getElementById('cp-confirm').value;
+  const btn=document.getElementById('cp-save');
+  const sp=document.getElementById('cp-spinner');
+  const tx=document.getElementById('cp-save-text');
+  if(!cur||!nw||!conf){cpErr.textContent='Todos los campos son requeridos';cpErr.style.display='block';return;}
+  if(nw!==conf){cpErr.textContent='Las contrasenas no coinciden';cpErr.style.display='block';return;}
+  if(nw.length<8){cpErr.textContent='Minimo 8 caracteres';cpErr.style.display='block';return;}
+  btn.disabled=true;sp.classList.remove('hidden');tx.textContent='Guardando...';
+  try{
+    const r=await fetch('/api/change-password',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+sessionStorage.getItem(SESSION_KEY)},body:JSON.stringify({current_password:cur,new_password:nw})});
+    const d=await r.json();
+    if(r.ok){cpOk.textContent='Contrasena actualizada!';cpOk.style.display='block';['cp-current','cp-new','cp-confirm'].forEach(id=>document.getElementById(id).value='');setTimeout(closePass,2000);}
+    else{cpErr.textContent=d.error||'Error';cpErr.style.display='block';}
+  }catch{cpErr.textContent='Error de conexion';cpErr.style.display='block';}
+  finally{btn.disabled=false;sp.classList.add('hidden');tx.textContent='Guardar';}
 });
 
-// Botón logout
-document.getElementById('logout-btn').addEventListener('click', () => logout('manual'));
+// --- Chatbot ---
+const payload=getPayload();
+const API_KEY=payload.dify_api_key||'';
+const API_URL='https://dify.engineconsulting.com.ar/v1/chat-messages';
+const UPLOAD_URL='https://dify.engineconsulting.com.ar/v1/files/upload';
+const DIFY_USER=payload.username||'usuario_web';
 
-// Arrancar el timer
-resetInactivityTimer();
+const chatCanvas=document.getElementById('chat-canvas');
+const userInput=document.getElementById('user-input');
+const sendButton=document.getElementById('send-button');
+const pdfBtn=document.getElementById('pdf-btn');
+const imageBtn=document.getElementById('image-btn');
+const pdfInput=document.getElementById('pdf-input');
+const imageInput=document.getElementById('image-input');
+const attachPreview=document.getElementById('attachment-preview');
+const attachThumb=document.getElementById('attach-thumb');
+const attachName=document.getElementById('attach-name');
+const attachIcon=document.getElementById('attach-icon');
+const attachRemove=document.getElementById('attach-remove');
+let pendingFile=null,conversationId='';
 
-// ═══════════════════════════════════════════════════════════
-// CHATBOT — código original sin cambios
-// ═══════════════════════════════════════════════════════════
+function showPreview(file,type){attachName.textContent=file.name;if(type==='image'){attachThumb.src=URL.createObjectURL(file);attachThumb.style.display='block';attachIcon.style.display='none';}else{attachThumb.style.display='none';attachIcon.style.display='inline-block';}attachPreview.classList.add('visible');}
+function clearAttachment(){pendingFile=null;attachPreview.classList.remove('visible');attachThumb.src='';attachThumb.style.display='none';attachIcon.style.display='inline-block';pdfInput.value='';imageInput.value='';}
+pdfBtn.addEventListener('click',()=>pdfInput.click());
+imageBtn.addEventListener('click',()=>imageInput.click());
+attachRemove.addEventListener('click',clearAttachment);
+pdfInput.addEventListener('change',()=>{const f=pdfInput.files[0];if(!f)return;pendingFile={file:f,type:'document',localUrl:null};showPreview(f,'document');});
+imageInput.addEventListener('change',()=>{const f=imageInput.files[0];if(!f)return;const u=URL.createObjectURL(f);pendingFile={file:f,type:'image',localUrl:u};showPreview(f,'image');});
 
-const API_KEY = 'app-eApQYaNB74wAmRgNgWxytelf';
-const API_URL = 'https://dify.engineconsulting.com.ar/v1/chat-messages';
-const UPLOAD_URL = 'https://dify.engineconsulting.com.ar/v1/files/upload';
-const DIFY_USER = 'usuario_web_unique';
+async function uploadFileToDify(file,type){const fd=new FormData();fd.append('file',file);fd.append('user',DIFY_USER);const r=await fetch(UPLOAD_URL,{method:'POST',headers:{'Authorization':'Bearer '+API_KEY},body:fd});if(!r.ok)throw new Error('Upload failed');const d=await r.json();return d.id;}
 
-const chatCanvas    = document.getElementById('chat-canvas');
-const userInput     = document.getElementById('user-input');
-const sendButton    = document.getElementById('send-button');
-const pdfBtn        = document.getElementById('pdf-btn');
-const imageBtn      = document.getElementById('image-btn');
-const pdfInput      = document.getElementById('pdf-input');
-const imageInput    = document.getElementById('image-input');
-const attachPreview = document.getElementById('attachment-preview');
-const attachThumb   = document.getElementById('attach-thumb');
-const attachName    = document.getElementById('attach-name');
-const attachIcon    = document.getElementById('attach-icon');
-const attachRemove  = document.getElementById('attach-remove');
+function appendMessage(role,text,att){
+  const w=document.createElement('div');
+  w.className=role==='user'?'flex flex-col items-end self-end max-w-[85%]':'flex flex-col items-start max-w-[85%]';
+  const bc=role==='user'?'user-bubble':'bot-bubble';
+  let aHTML='';
+  if(att){if(att.type==='image'&&att.localUrl)aHTML='<img src="'+att.localUrl+'" class="bubble-image" alt="img"/>';else if(att.type==='document')aHTML='<div class="bubble-pdf"><span class="material-symbols-outlined" style="font-size:16px">picture_as_pdf</span><span>'+att.name+'</span></div>';}
+  w.innerHTML='<div class="'+bc+' px-6 py-4 rounded-xl shadow-sm">'+aHTML+'<p class="font-body '+(role==='user'?'font-medium':'font-light')+' text-lg leading-relaxed message-content">'+text+'</p></div><span class="mt-2 text-[10px] font-medium uppercase tracking-[0.05em] text-slate-500 font-label">'+(role==='user'?'YOU':'ENGINE')+' • NOW</span>';
+  chatCanvas.appendChild(w);chatCanvas.scrollTop=chatCanvas.scrollHeight;
+  return w.querySelector('.message-content');
+}
+function appendTyping(){const w=document.createElement('div');w.className='flex flex-col items-start max-w-[85%]';w.id='typing-indicator';w.innerHTML='<div class="bot-bubble px-6 py-4 rounded-xl shadow-sm flex items-center gap-1" style="min-width:60px"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>';chatCanvas.appendChild(w);chatCanvas.scrollTop=chatCanvas.scrollHeight;}
+function removeTyping(){const e=document.getElementById('typing-indicator');if(e)e.remove();}
+function parseAnswer(raw){const t=raw.trim();if(!t.startsWith('{')&&!t.startsWith('['))return raw;try{const p=JSON.parse(t);if(p.messages&&Array.isArray(p.messages))return p.messages.map(m=>m.text||'').join('
+');if(p.text)return p.text;if(p.answer)return p.answer;return JSON.stringify(p,null,2);}catch{return raw;}}
 
-let pendingFile = null;
-let conversationId = '';
-
-function showPreview(file, type) {
-    attachName.textContent = file.name;
-    if (type === 'image') {
-        attachThumb.src = URL.createObjectURL(file);
-        attachThumb.style.display = 'block';
-        attachIcon.style.display = 'none';
-    } else {
-        attachThumb.style.display = 'none';
-        attachIcon.style.display = 'inline-block';
+async function sendMessage(){
+  const text=userInput.value.trim();const fs=pendingFile;
+  if(!text&&!fs)return;
+  userInput.value='';clearAttachment();
+  const uAtt=fs?{type:fs.type,localUrl:fs.localUrl,name:fs.file?.name}:null;
+  appendMessage('user',text||'(archivo adjunto)',uAtt);appendTyping();
+  let full='',bot=null;
+  try{
+    const body={inputs:{},query:text||'Procesa el archivo adjunto.',response_mode:'streaming',user:DIFY_USER,conversation_id:conversationId||undefined};
+    if(fs){const fid=await uploadFileToDify(fs.file,fs.type);body.files=[{type:fs.type,transfer_method:'local_file',upload_file_id:fid}];}
+    const resp=await fetch(API_URL,{method:'POST',headers:{'Authorization':'Bearer '+API_KEY,'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(!resp.ok)throw new Error('API error '+resp.status);
+    const reader=resp.body.getReader();const dec=new TextDecoder();
+    while(true){const{done,value}=await reader.read();if(done)break;
+      for(const line of dec.decode(value,{stream:true}).split('
+')){
+        if(!line.trim().startsWith('data:'))continue;
+        try{const js=line.trim().slice(5).trim();if(!js)continue;const d=JSON.parse(js);
+          if(d.conversation_id)conversationId=d.conversation_id;
+          if(d.event==='message'||d.event==='agent_message'){full+=d.answer||'';if(!bot){removeTyping();bot=appendMessage('bot','');}bot.innerText=parseAnswer(full);chatCanvas.scrollTop=chatCanvas.scrollHeight;}
+          if(d.event==='message_end'&&bot)bot.innerText=parseAnswer(full);
+        }catch(e){console.error(e);}
+      }
     }
-    attachPreview.classList.add('visible');
+    if(!bot){removeTyping();appendMessage('bot',parseAnswer(full)||'Sin respuesta.');}
+  }catch(err){console.error(err);removeTyping();if(!bot)bot=appendMessage('bot','');bot.innerText='Hubo un error en la conexion. Por favor, intenta de nuevo.';bot.classList.add('text-red-400');}
 }
-
-function clearAttachment() {
-    pendingFile = null;
-    attachPreview.classList.remove('visible');
-    attachThumb.src = '';
-    attachThumb.style.display = 'none';
-    attachIcon.style.display = 'inline-block';
-    pdfInput.value = '';
-    imageInput.value = '';
-}
-
-pdfBtn.addEventListener('click', () => pdfInput.click());
-imageBtn.addEventListener('click', () => imageInput.click());
-attachRemove.addEventListener('click', clearAttachment);
-
-pdfInput.addEventListener('change', () => {
-    const file = pdfInput.files[0];
-    if (!file) return;
-    pendingFile = { file, type: 'document', localUrl: null };
-    showPreview(file, 'document');
-});
-
-imageInput.addEventListener('change', () => {
-    const file = imageInput.files[0];
-    if (!file) return;
-    const localUrl = URL.createObjectURL(file);
-    pendingFile = { file, type: 'image', localUrl };
-    showPreview(file, 'image');
-});
-
-async function uploadFileToDify(file, type) {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('user', DIFY_USER);
-
-    const res = await fetch(UPLOAD_URL, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${API_KEY}` },
-        body: formData
-    });
-
-    if (!res.ok) throw new Error('File upload failed: ' + res.status);
-    const data = await res.json();
-    return data.id;
-}
-
-function appendMessage(role, text, attachmentInfo) {
-    const wrapper = document.createElement('div');
-    wrapper.className = role === 'user'
-        ? 'flex flex-col items-end self-end max-w-[85%]'
-        : 'flex flex-col items-start max-w-[85%]';
-
-    const bubbleClasses = role === 'user' ? 'user-bubble' : 'bot-bubble';
-
-    let attachmentHTML = '';
-    if (attachmentInfo) {
-        if (attachmentInfo.type === 'image' && attachmentInfo.localUrl) {
-            attachmentHTML = `<img src="${attachmentInfo.localUrl}" class="bubble-image" alt="imagen adjunta"/>`;
-        } else if (attachmentInfo.type === 'document') {
-            attachmentHTML = `
-                <div class="bubble-pdf">
-                    <span class="material-symbols-outlined" style="font-size:16px">picture_as_pdf</span>
-                    <span>${attachmentInfo.name}</span>
-                </div>`;
-        }
-    }
-
-    wrapper.innerHTML = `
-        <div class="${bubbleClasses} px-6 py-4 rounded-xl shadow-sm">
-            ${attachmentHTML}
-            <p class="font-body ${role === 'user' ? 'font-medium' : 'font-light'} text-lg leading-relaxed message-content">${text}</p>
-        </div>
-        <span class="mt-2 text-[10px] font-medium uppercase tracking-[0.05em] text-slate-500 font-label">
-            ${role === 'user' ? 'YOU' : 'ENGINE'} • NOW
-        </span>
-    `;
-
-    chatCanvas.appendChild(wrapper);
-    chatCanvas.scrollTop = chatCanvas.scrollHeight;
-    return wrapper.querySelector('.message-content');
-}
-
-function appendTyping() {
-    const wrapper = document.createElement('div');
-    wrapper.className = 'flex flex-col items-start max-w-[85%]';
-    wrapper.id = 'typing-indicator';
-    wrapper.innerHTML = `
-        <div class="bot-bubble px-6 py-4 rounded-xl shadow-sm flex items-center gap-1" style="min-width:60px">
-            <span class="dot"></span><span class="dot"></span><span class="dot"></span>
-        </div>`;
-    chatCanvas.appendChild(wrapper);
-    chatCanvas.scrollTop = chatCanvas.scrollHeight;
-}
-function removeTyping() {
-    const el = document.getElementById('typing-indicator');
-    if (el) el.remove();
-}
-
-function parseAnswer(raw) {
-    const trimmed = raw.trim();
-    if (!trimmed.startsWith('{') && !trimmed.startsWith('[')) return raw;
-    try {
-        const parsed = JSON.parse(trimmed);
-        if (parsed.messages && Array.isArray(parsed.messages)) {
-            return parsed.messages.map(m => m.text || '').join('\n');
-        }
-        if (parsed.text) return parsed.text;
-        if (parsed.answer) return parsed.answer;
-        return JSON.stringify(parsed, null, 2);
-    } catch {
-        return raw;
-    }
-}
-
-async function sendMessage() {
-    const text = userInput.value.trim();
-    const fileSnapshot = pendingFile;
-
-    if (!text && !fileSnapshot) return;
-
-    userInput.value = '';
-    clearAttachment();
-
-    const userAttachInfo = fileSnapshot
-        ? { type: fileSnapshot.type, localUrl: fileSnapshot.localUrl, name: fileSnapshot.file?.name }
-        : null;
-    appendMessage('user', text || '(archivo adjunto)', userAttachInfo);
-    appendTyping();
-
-    let fullResponse = '';
-    let botMessageElement = null;
-
-    try {
-        const body = {
-            inputs: {},
-            query: text || 'Procesá el archivo adjunto.',
-            response_mode: 'streaming',
-            user: DIFY_USER,
-            conversation_id: conversationId || undefined
-        };
-
-        if (fileSnapshot) {
-            const fileId = await uploadFileToDify(fileSnapshot.file, fileSnapshot.type);
-            body.files = [{
-                type: fileSnapshot.type,
-                transfer_method: 'local_file',
-                upload_file_id: fileId
-            }];
-        }
-
-        const response = await fetch(API_URL, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${API_KEY}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(body)
-        });
-
-        if (!response.ok) throw new Error('API request failed: ' + response.status);
-
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-
-        while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-
-            const chunk = decoder.decode(value, { stream: true });
-            const lines = chunk.split('\n');
-
-            for (const line of lines) {
-                if (!line.trim().startsWith('data:')) continue;
-                try {
-                    const jsonString = line.trim().slice(5).trim();
-                    if (!jsonString) continue;
-                    const data = JSON.parse(jsonString);
-
-                    if (data.conversation_id) conversationId = data.conversation_id;
-
-                    if (data.event === 'message' || data.event === 'agent_message') {
-                        fullResponse += data.answer || '';
-
-                        if (!botMessageElement) {
-                            removeTyping();
-                            botMessageElement = appendMessage('bot', '');
-                        }
-
-                        botMessageElement.innerText = parseAnswer(fullResponse);
-                        chatCanvas.scrollTop = chatCanvas.scrollHeight;
-                    }
-
-                    if (data.event === 'message_end') {
-                        if (botMessageElement) {
-                            botMessageElement.innerText = parseAnswer(fullResponse);
-                        }
-                    }
-
-                } catch (e) {
-                    console.error('Stream parse error:', e);
-                }
-            }
-        }
-
-        if (!botMessageElement) {
-            removeTyping();
-            appendMessage('bot', parseAnswer(fullResponse) || 'Sin respuesta.');
-        }
-
-    } catch (error) {
-        console.error('Chat error:', error);
-        removeTyping();
-        if (!botMessageElement) botMessageElement = appendMessage('bot', '');
-        botMessageElement.innerText = 'Hubo un error en la conexión. Por favor, intentá de nuevo.';
-        botMessageElement.classList.add('text-red-400');
-    }
-}
-
-sendButton.addEventListener('click', sendMessage);
-userInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
-</script>
+sendButton.addEventListener('click',sendMessage);
+userInput.addEventListener('keypress',e=>{if(e.key==='Enter')sendMessage();});
+<\/script>
 </body>
 </html>
