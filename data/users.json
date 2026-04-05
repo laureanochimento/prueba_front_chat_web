@@ -1,8 +1,16 @@
 {
+  "admins": [
+    {
+      "username": "Admin",
+      "password": "$2b$10$40elc7hwSDmYOX.p/7FDBu3RfhJGqbm7LnCtncbKRLZbEAzC6FKG2"
+    }
+  ],
   "users": [
     {
       "username": "laureano.chimento@engineconsulting.com.ar",
-      "password": "$2b$10$kfSp9utL9XbqOTwqJUUSqOoVj61dumBPOQaW8GfSL67eXB4LIWBRy"
+      "password": "$2b$10$UedME9bwOXbVySDO/7EF.eLtA8Q1naSuCAhdAuWcPdS/CL.3Hrf7y",
+      "name": "Laureano Chimento",
+      "dify_api_key": "app-eApQYaNB74wAmRgNgWxytelf"
     }
   ]
 }
