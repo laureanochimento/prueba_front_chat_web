@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>ENGINE | Admin</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;800&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    .ochre-gradient { background: linear-gradient(135deg, #AF9071 0%, #D6B89D 100%); }
+
+    /* Login screen */
+    #login-screen {
+      min-height: 100dvh;
+      background: #0E1730;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .input-dark {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: white;
+      border-radius: 12px;
+      padding: 10px 16px;
+      width: 100%;
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+    .input-dark:focus { outline: none; border-color: #AF9071; background: rgba(255,255,255,0.08); }
+    .input-dark::placeholder { color: rgba(255,255,255,0.3); }
+
+    /* Panel */
+    #admin-panel { display: none; min-height: 100dvh; background: #f8fafc; }
+
+    /* Modal */
+    #modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    #modal-overlay.open { display: flex; }
+    .modal-box {
+      background: white;
+      border-radius: 20px;
+      padding: 32px;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    }
+
+    /* Toast */
+    #toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      padding: 10px 20px; border-radius: 12px; font-size: 13px;
+      z-index: 200; white-space: nowrap; display: none;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+    #toast.success { display: block; background: #22c55e; color: white; }
+    #toast.error   { display: block; background: #ef4444; color: white; }
+
+    @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+    .fade-in { animation: fadeIn 0.3s ease; }
+
+    tr:hover td { background: #f1f5f9; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════ LOGIN ADMIN ═══════════════ -->
+<div id="login-screen">
+  <div class="w-full max-w-sm px-4 fade-in">
+    <div class="text-center mb-8">
+      <div class="text-3xl font-extrabold text-white uppercase tracking-tight mb-1">ENGINE</div>
+      <p class="text-slate-400 text-sm">Panel de administración</p>
+    </div>
+    <div class="bg-[#162040] rounded-2xl p-8 shadow-2xl">
+      <div id="login-error" class="hidden mb-4 bg-red-500/10 border border-red-500/30 text-red-300 rounded-xl px-4 py-3 text-sm flex items-center gap-2">
+        <span class="material-symbols-outlined" style="font-size:16px">error</span>
+        <span id="login-error-msg"></span>
+      </div>
+      <div class="mb-4">
+        <label class="block text-xs font-medium uppercase tracking-widest text-slate-400 mb-2">Usuario admin</label>
+        <input class="input-dark" id="admin-username" type="text" placeholder="Admin" autocomplete="username"/>
+      </div>
+      <div class="mb-6 relative">
+        <label class="block text-xs font-medium uppercase tracking-widest text-slate-400 mb-2">Contraseña</label>
+        <input class="input-dark pr-10" id="admin-password" type="password" placeholder="••••••••" autocomplete="current-password"/>
+        <button class="absolute right-3 bottom-3 text-slate-500 hover:text-slate-300" id="toggle-admin-pass" type="button" tabindex="-1">
+          <span class="material-symbols-outlined" id="admin-eye" style="font-size:20px">visibility</span>
+        </button>
+      </div>
+      <button class="ochre-gradient w-full py-3 rounded-xl text-white font-semibold text-sm tracking-wide shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2" id="admin-login-btn">
+        <span id="admin-btn-text">Ingresar</span>
+        <span class="material-symbols-outlined" id="admin-btn-icon" style="font-size:18px">arrow_forward</span>
+        <svg id="admin-btn-spinner" class="hidden animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ PANEL ADMIN ═══════════════ -->
+<div id="admin-panel">
+
+  <!-- Header -->
+  <header class="bg-[#0E1730] px-6 h-16 flex items-center justify-between sticky top-0 z-50">
+    <div class="text-xl font-extrabold text-white uppercase tracking-tight">ENGINE <span class="text-[#AF9071] text-sm font-medium normal-case">Admin</span></div>
+    <div class="flex items-center gap-3">
+      <button class="text-slate-400 hover:text-[#AF9071] transition-colors text-sm flex items-center gap-1" id="change-admin-pass-btn">
+        <span class="material-symbols-outlined" style="font-size:18px">lock</span>
+        <span class="hidden md:inline">Cambiar contraseña</span>
+      </button>
+      <button class="text-slate-400 hover:text-red-400 transition-colors flex items-center gap-1 text-sm" id="admin-logout-btn">
+        <span class="material-symbols-outlined" style="font-size:18px">logout</span>
+        <span class="hidden md:inline">Salir</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Content -->
+  <main class="max-w-5xl mx-auto px-4 py-8">
+
+    <!-- Stats bar -->
+    <div class="grid grid-cols-2 gap-4 mb-8">
+      <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+        <p class="text-xs font-medium uppercase tracking-widest text-slate-400 mb-1">Usuarios activos</p>
+        <p class="text-3xl font-bold text-[#0E1730]" id="stat-total">–</p>
+      </div>
+      <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+        <p class="text-xs font-medium uppercase tracking-widest text-slate-400 mb-1">Con API Key</p>
+        <p class="text-3xl font-bold text-[#AF9071]" id="stat-with-key">–</p>
+      </div>
+    </div>
+
+    <!-- Table card -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+      <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+        <h2 class="font-semibold text-[#0E1730]">Usuarios</h2>
+        <button class="ochre-gradient text-white px-4 py-2 rounded-xl text-sm font-medium flex items-center gap-1 shadow active:scale-95 transition-all" id="new-user-btn">
+          <span class="material-symbols-outlined" style="font-size:18px">person_add</span>
+          Nuevo usuario
+        </button>
+      </div>
+
+      <!-- Desktop table -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="bg-slate-50 text-left">
+              <th class="px-6 py-3 font-medium text-slate-500 text-xs uppercase tracking-wide">Nombre</th>
+              <th class="px-6 py-3 font-medium text-slate-500 text-xs uppercase tracking-wide">Usuario / Email</th>
+              <th class="px-6 py-3 font-medium text-slate-500 text-xs uppercase tracking-wide">API Key Dify</th>
+              <th class="px-6 py-3 font-medium text-slate-500 text-xs uppercase tracking-wide text-right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="users-table-body">
+            <tr>
+              <td colspan="4" class="px-6 py-8 text-center text-slate-400">
+                <span class="material-symbols-outlined animate-spin" style="font-size:24px">progress_activity</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ═══════════════ MODAL ═══════════════ -->
+<div id="modal-overlay">
+  <div class="modal-box fade-in">
+    <div class="flex items-center justify-between mb-6">
+      <h3 class="font-bold text-lg text-[#0E1730]" id="modal-title">Nuevo usuario</h3>
+      <button class="text-slate-400 hover:text-slate-600" id="modal-close">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+
+    <div id="modal-error" class="hidden mb-4 bg-red-50 border border-red-200 text-red-600 rounded-xl px-4 py-3 text-sm"></div>
+
+    <!-- Formulario usuario -->
+    <div id="form-user">
+      <div class="mb-4">
+        <label class="block text-xs font-medium uppercase tracking-widest text-slate-400 mb-2">Nombre completo *</label>
+        <input class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#AF9071]" id="f-name" type="text" placeholder="Ej: Juan Pérez"/>
+      </div>
+      <div class="mb-4">
+        <label class="block text-xs font-medium uppercase tracking-widest text-slate-400 mb-2">Email / Usuario *</label>
+        <input class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#AF9071]" id="f-username" type="email" placeholder="juan@empresa.com"/>
+      </div>
+      <div class="mb-4" id="f-password-group">
+        <label class="block text-xs font-medium uppercase tracking-widest text-slate-400 mb-2">Contraseña *</label>
+        <input class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#AF9071]" id="f-password" type="password" placeholder="Mínimo 8 caracteres"/>
+      </div>
+      <div class="mb-4" id="f-newpass-group" style="display:none">
+        <label class="block text-xs font-medium uppercase tracking-widest text-slate-400 mb-2">Nueva contraseña <span class="normal-case font-normal text-slate-400">(dejar vacío para no cambiar)</span></label>
+        <input class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#AF9071]" id="f-newpassword" type="password" placeholder="Mínimo 8 caracteres"/>
+      </div>
+      <div class="mb-6">
+        <label class="block text-xs font-medium uppercase tracking-widest text-slate-400 mb-2">API Key de Dify</label>
+        <input class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#AF9071] font-mono" id="f-apikey" type="text" placeholder="app-xxxxxxxxxxxxxxxx"/>
+        <p class="text-xs text-slate-400 mt-1">El flujo de Dify que usará este usuario</p>
+      </div>
+      <div class="flex gap-3">
+        <button class="flex-1 border border-slate-200 text-slate-500 py-3 rounded-xl text-sm font-medium hover:bg-slate-50 transition-all" id="modal-cancel">Cancelar</button>
+        <button class="flex-1 ochre-gradient text-white py-3 rounded-xl text-sm font-semibold shadow active:scale-95 transition-all flex items-center justify-center gap-2" id="modal-save">
+          <span id="modal-save-text">Crear usuario</span>
+          <svg id="modal-spinner" class="hidden animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Formulario cambio contraseña admin -->
+    <div id="form-admin-pass" style="display:none">
+      <div class="mb-4">
+        <label class="block text-xs font-medium uppercase tracking-widest text-slate-400 mb-2">Contraseña actual</label>
+        <input class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#AF9071]" id="ap-current" type="password" placeholder="••••••••"/>
+      </div>
+      <div class="mb-4">
+        <label class="block text-xs font-medium uppercase tracking-widest text-slate-400 mb-2">Nueva contraseña</label>
+        <input class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#AF9071]" id="ap-new" type="password" placeholder="Mínimo 8 caracteres"/>
+      </div>
+      <div class="mb-6">
+        <label class="block text-xs font-medium uppercase tracking-widest text-slate-400 mb-2">Confirmar nueva contraseña</label>
+        <input class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#AF9071]" id="ap-confirm" type="password" placeholder="Repetí la contraseña"/>
+      </div>
+      <div class="flex gap-3">
+        <button class="flex-1 border border-slate-200 text-slate-500 py-3 rounded-xl text-sm font-medium hover:bg-slate-50" id="ap-cancel">Cancelar</button>
+        <button class="flex-1 ochre-gradient text-white py-3 rounded-xl text-sm font-semibold shadow active:scale-95 transition-all flex items-center justify-center gap-2" id="ap-save">
+          <span id="ap-save-text">Cambiar contraseña</span>
+          <svg id="ap-spinner" class="hidden animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+// ── Estado ────────────────────────────────────────────────────────
+let adminToken = sessionStorage.getItem('engine_admin_token') || null;
+let editingUser = null; // null = crear, string = editar
+
+// ── Elementos ─────────────────────────────────────────────────────
+const loginScreen   = document.getElementById('login-screen');
+const adminPanel    = document.getElementById('admin-panel');
+const modalOverlay  = document.getElementById('modal-overlay');
+const toast         = document.getElementById('toast');
+
+// ── Toast ─────────────────────────────────────────────────────────
+function showToast(msg, type = 'success') {
+  toast.textContent = msg;
+  toast.className = type;
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => { toast.className = ''; }, 3000);
+}
+
+// ── Modal helpers ─────────────────────────────────────────────────
+function openModal(mode) {
+  document.getElementById('modal-error').classList.add('hidden');
+  document.getElementById('form-user').style.display = mode === 'admin-pass' ? 'none' : 'block';
+  document.getElementById('form-admin-pass').style.display = mode === 'admin-pass' ? 'block' : 'none';
+
+  if (mode === 'create') {
+    document.getElementById('modal-title').textContent = 'Nuevo usuario';
+    document.getElementById('modal-save-text').textContent = 'Crear usuario';
+    document.getElementById('f-password-group').style.display = 'block';
+    document.getElementById('f-newpass-group').style.display = 'none';
+    document.getElementById('f-name').value = '';
+    document.getElementById('f-username').value = '';
+    document.getElementById('f-password').value = '';
+    document.getElementById('f-apikey').value = '';
+    document.getElementById('f-username').disabled = false;
+    editingUser = null;
+  } else if (mode === 'edit') {
+    document.getElementById('modal-title').textContent = 'Editar usuario';
+    document.getElementById('modal-save-text').textContent = 'Guardar cambios';
+    document.getElementById('f-password-group').style.display = 'none';
+    document.getElementById('f-newpass-group').style.display = 'block';
+    document.getElementById('f-newpassword').value = '';
+    document.getElementById('f-username').disabled = true;
+  } else if (mode === 'admin-pass') {
+    document.getElementById('modal-title').textContent = 'Cambiar contraseña admin';
+    document.getElementById('ap-current').value = '';
+    document.getElementById('ap-new').value = '';
+    document.getElementById('ap-confirm').value = '';
+  }
+
+  modalOverlay.classList.add('open');
+}
+
+function closeModal() {
+  modalOverlay.classList.remove('open');
+  editingUser = null;
+}
+
+document.getElementById('modal-close').addEventListener('click', closeModal);
+document.getElementById('modal-cancel').addEventListener('click', closeModal);
+document.getElementById('modal-overlay').addEventListener('click', e => { if (e.target === modalOverlay) closeModal(); });
+
+// ── Auth helpers ───────────────────────────────────────────────────
+function apiHeaders() {
+  return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` };
+}
+
+async function apiFetch(url, options = {}) {
+  const res = await fetch(url, options);
+  const data = await res.json();
+  return { ok: res.ok, status: res.status, data };
+}
+
+// ── Login admin ────────────────────────────────────────────────────
+const toggleAdminPass = document.getElementById('toggle-admin-pass');
+toggleAdminPass.addEventListener('click', () => {
+  const inp = document.getElementById('admin-password');
+  const eye = document.getElementById('admin-eye');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+  eye.textContent = inp.type === 'password' ? 'visibility' : 'visibility_off';
+});
+
+async function doAdminLogin() {
+  const username = document.getElementById('admin-username').value.trim();
+  const password = document.getElementById('admin-password').value;
+  const errEl = document.getElementById('login-error');
+  const errMsg = document.getElementById('login-error-msg');
+  const btn = document.getElementById('admin-login-btn');
+  const spinner = document.getElementById('admin-btn-spinner');
+  const icon = document.getElementById('admin-btn-icon');
+
+  errEl.classList.add('hidden');
+  btn.disabled = true;
+  spinner.classList.remove('hidden');
+  icon.classList.add('hidden');
+
+  try {
+    const { ok, data } = await apiFetch('/api/admin?action=login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+
+    if (ok && data.token) {
+      adminToken = data.token;
+      sessionStorage.setItem('engine_admin_token', adminToken);
+      showPanel();
+    } else {
+      errMsg.textContent = data.error || 'Error al ingresar';
+      errEl.classList.remove('hidden');
+    }
+  } catch {
+    errMsg.textContent = 'No se pudo conectar';
+    errEl.classList.remove('hidden');
+  } finally {
+    btn.disabled = false;
+    spinner.classList.add('hidden');
+    icon.classList.remove('hidden');
+  }
+}
+
+document.getElementById('admin-login-btn').addEventListener('click', doAdminLogin);
+document.getElementById('admin-password').addEventListener('keypress', e => { if (e.key === 'Enter') doAdminLogin(); });
+
+// ── Mostrar panel ──────────────────────────────────────────────────
+function showPanel() {
+  loginScreen.style.display = 'none';
+  adminPanel.style.display = 'block';
+  loadUsers();
+}
+
+function showLogin() {
+  loginScreen.style.display = 'flex';
+  adminPanel.style.display = 'none';
+}
+
+// ── Logout ─────────────────────────────────────────────────────────
+document.getElementById('admin-logout-btn').addEventListener('click', () => {
+  sessionStorage.removeItem('engine_admin_token');
+  adminToken = null;
+  showLogin();
+});
+
+// ── Cargar usuarios ────────────────────────────────────────────────
+async function loadUsers() {
+  const tbody = document.getElementById('users-table-body');
+  tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-slate-400">
+    <span class="material-symbols-outlined animate-spin" style="font-size:24px">progress_activity</span>
+  </td></tr>`;
+
+  const { ok, data, status } = await apiFetch('/api/admin?action=list', { headers: apiHeaders() });
+
+  if (status === 401) { sessionStorage.removeItem('engine_admin_token'); showLogin(); return; }
+  if (!ok) { showToast('Error cargando usuarios', 'error'); return; }
+
+  const users = data.users || [];
+  document.getElementById('stat-total').textContent = users.length;
+  document.getElementById('stat-with-key').textContent = users.filter(u => u.dify_api_key).length;
+
+  if (!users.length) {
+    tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-slate-400 text-sm">No hay usuarios aún</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = users.map(u => `
+    <tr class="border-t border-slate-100 transition-colors">
+      <td class="px-6 py-4 font-medium text-[#0E1730]">${escHtml(u.name || '–')}</td>
+      <td class="px-6 py-4 text-slate-500 text-xs">${escHtml(u.username)}</td>
+      <td class="px-6 py-4">
+        ${u.dify_api_key
+          ? `<span class="font-mono text-xs bg-slate-100 px-2 py-1 rounded-lg text-slate-600">${u.dify_api_key.slice(0,12)}…</span>`
+          : `<span class="text-xs text-slate-400 italic">Sin asignar</span>`}
+      </td>
+      <td class="px-6 py-4 text-right">
+        <button class="text-[#AF9071] hover:text-[#8a7059] transition-colors mr-3" onclick="editUser('${escHtml(u.username)}','${escHtml(u.name||'')}','${escHtml(u.dify_api_key||'')}')">
+          <span class="material-symbols-outlined" style="font-size:20px">edit</span>
+        </button>
+        <button class="text-red-400 hover:text-red-600 transition-colors" onclick="deleteUser('${escHtml(u.username)}','${escHtml(u.name||u.username)}')">
+          <span class="material-symbols-outlined" style="font-size:20px">delete</span>
+        </button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// ── Nuevo usuario ──────────────────────────────────────────────────
+document.getElementById('new-user-btn').addEventListener('click', () => openModal('create'));
+
+// ── Editar usuario ─────────────────────────────────────────────────
+function editUser(username, name, apikey) {
+  editingUser = username;
+  document.getElementById('f-name').value = name;
+  document.getElementById('f-username').value = username;
+  document.getElementById('f-apikey').value = apikey;
+  openModal('edit');
+}
+
+// ── Eliminar usuario ───────────────────────────────────────────────
+async function deleteUser(username, name) {
+  if (!confirm(`¿Eliminás al usuario "${name}"? Esta acción no se puede deshacer.`)) return;
+
+  const { ok, data } = await apiFetch('/api/admin?action=delete', {
+    method: 'DELETE',
+    headers: apiHeaders(),
+    body: JSON.stringify({ username })
+  });
+
+  if (ok) { showToast('Usuario eliminado'); loadUsers(); }
+  else showToast(data.error || 'Error al eliminar', 'error');
+}
+
+// ── Guardar usuario (crear/editar) ─────────────────────────────────
+document.getElementById('modal-save').addEventListener('click', async () => {
+  const name     = document.getElementById('f-name').value.trim();
+  const username = document.getElementById('f-username').value.trim();
+  const password = document.getElementById('f-password').value;
+  const newpass  = document.getElementById('f-newpassword').value;
+  const apikey   = document.getElementById('f-apikey').value.trim();
+  const errEl    = document.getElementById('modal-error');
+  const spinner  = document.getElementById('modal-spinner');
+  const saveText = document.getElementById('modal-save-text');
+  const saveBtn  = document.getElementById('modal-save');
+
+  errEl.classList.add('hidden');
+
+  if (!name || !username) { errEl.textContent = 'Nombre y email son requeridos'; errEl.classList.remove('hidden'); return; }
+  if (!editingUser && !password) { errEl.textContent = 'La contraseña es requerida'; errEl.classList.remove('hidden'); return; }
+  if (!editingUser && password.length < 8) { errEl.textContent = 'La contraseña debe tener al menos 8 caracteres'; errEl.classList.remove('hidden'); return; }
+  if (editingUser && newpass && newpass.length < 8) { errEl.textContent = 'La nueva contraseña debe tener al menos 8 caracteres'; errEl.classList.remove('hidden'); return; }
+
+  saveBtn.disabled = true;
+  spinner.classList.remove('hidden');
+  saveText.textContent = 'Guardando...';
+
+  let result;
+  if (!editingUser) {
+    result = await apiFetch('/api/admin?action=create', {
+      method: 'POST', headers: apiHeaders(),
+      body: JSON.stringify({ username, password, name, dify_api_key: apikey })
+    });
+  } else {
+    const body = { username: editingUser, name, dify_api_key: apikey };
+    if (newpass) body.new_password = newpass;
+    result = await apiFetch('/api/admin?action=update', {
+      method: 'PUT', headers: apiHeaders(),
+      body: JSON.stringify(body)
+    });
+  }
+
+  saveBtn.disabled = false;
+  spinner.classList.add('hidden');
+  saveText.textContent = editingUser ? 'Guardar cambios' : 'Crear usuario';
+
+  if (result.ok) {
+    showToast(editingUser ? 'Usuario actualizado' : 'Usuario creado');
+    closeModal();
+    loadUsers();
+  } else {
+    errEl.textContent = result.data.error || 'Error al guardar';
+    errEl.classList.remove('hidden');
+  }
+});
+
+// ── Cambiar contraseña admin ───────────────────────────────────────
+document.getElementById('change-admin-pass-btn').addEventListener('click', () => openModal('admin-pass'));
+document.getElementById('ap-cancel').addEventListener('click', closeModal);
+
+document.getElementById('ap-save').addEventListener('click', async () => {
+  const current  = document.getElementById('ap-current').value;
+  const newPass  = document.getElementById('ap-new').value;
+  const confirm  = document.getElementById('ap-confirm').value;
+  const errEl    = document.getElementById('modal-error');
+  const spinner  = document.getElementById('ap-spinner');
+  const saveText = document.getElementById('ap-save-text');
+  const saveBtn  = document.getElementById('ap-save');
+
+  errEl.classList.add('hidden');
+
+  if (!current || !newPass || !confirm) { errEl.textContent = 'Todos los campos son requeridos'; errEl.classList.remove('hidden'); return; }
+  if (newPass !== confirm) { errEl.textContent = 'Las contraseñas no coinciden'; errEl.classList.remove('hidden'); return; }
+  if (newPass.length < 8) { errEl.textContent = 'Mínimo 8 caracteres'; errEl.classList.remove('hidden'); return; }
+
+  saveBtn.disabled = true;
+  spinner.classList.remove('hidden');
+  saveText.textContent = 'Guardando...';
+
+  const { ok, data } = await apiFetch('/api/admin?action=change-admin-password', {
+    method: 'PUT', headers: apiHeaders(),
+    body: JSON.stringify({ current_password: current, new_password: newPass })
+  });
+
+  saveBtn.disabled = false;
+  spinner.classList.add('hidden');
+  saveText.textContent = 'Cambiar contraseña';
+
+  if (ok) { showToast('Contraseña actualizada'); closeModal(); }
+  else { errEl.textContent = data.error || 'Error al cambiar contraseña'; errEl.classList.remove('hidden'); }
+});
+
+// ── Init ───────────────────────────────────────────────────────────
+if (adminToken) showPanel();
+else showLogin();
+</script>
+</body>
+</html>
