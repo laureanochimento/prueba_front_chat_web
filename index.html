@@ -98,9 +98,32 @@
         font-size: 12px;
         font-family: 'Inter', sans-serif;
     }
+
+    /* Toast de sesión por expirar */
+    #session-toast {
+        display: none;
+        position: fixed;
+        bottom: 100px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #1e293b;
+        color: #fbbf24;
+        padding: 10px 20px;
+        border-radius: 12px;
+        font-size: 13px;
+        font-family: 'Inter', sans-serif;
+        z-index: 9999;
+        white-space: nowrap;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        border: 1px solid rgba(251,191,36,0.2);
+    }
+    #session-toast.visible { display: block; }
 </style>
 </head>
 <body class="font-body text-on-surface flex flex-col h-screen overflow-hidden">
+
+<!-- Toast aviso sesión -->
+<div id="session-toast">⚠️ Tu sesión expirará en 2 minutos por inactividad</div>
 
 <!-- Header -->
 <header class="fixed top-0 w-full z-50 bg-[#0E1730] flex items-center justify-between px-6 h-16">
@@ -108,8 +131,12 @@
         <span class="material-symbols-outlined">menu</span>
     </button>
     <div class="text-xl font-bold tracking-[-0.02em] text-white font-headline uppercase">ENGINE</div>
-    <button class="text-[#e0c1a4] hover:text-[#e0c1a4] transition-colors scale-95 active:duration-150">
-        <span class="material-symbols-outlined">settings</span>
+    <button
+        class="text-[#e0c1a4] hover:text-[#e0c1a4] transition-colors scale-95 active:duration-150"
+        id="logout-btn"
+        title="Cerrar sesión"
+    >
+        <span class="material-symbols-outlined">logout</span>
     </button>
 </header>
 
@@ -170,8 +197,75 @@
     </div>
 </div>
 
-<!-- ===== HIDDEN: upload file to Dify ===== -->
 <script>
+// ═══════════════════════════════════════════════════════════
+// PROTECCIÓN DE SESIÓN + TIMER DE INACTIVIDAD (15 minutos)
+// ═══════════════════════════════════════════════════════════
+
+const SESSION_KEY  = 'engine_token';
+const USER_KEY     = 'engine_user';
+const TIMEOUT_MS   = 15 * 60 * 1000; // 15 minutos
+const WARNING_MS   = 13 * 60 * 1000; // aviso a los 13 min
+const SECRET       = 'engine-secret-2024';
+
+function logout(reason) {
+    sessionStorage.removeItem(SESSION_KEY);
+    sessionStorage.removeItem(USER_KEY);
+    window.location.href = '/login.html' + (reason ? '?msg=' + reason : '');
+}
+
+function validateToken(token) {
+    if (!token) return false;
+    try {
+        const [encoded] = token.split('.');
+        const payload = JSON.parse(atob(encoded));
+        if (Date.now() > payload.exp) return false;
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+// Verificar sesión al cargar
+const token = sessionStorage.getItem(SESSION_KEY);
+if (!validateToken(token)) {
+    logout('expired');
+}
+
+// Timer de inactividad
+let warningTimer;
+let logoutTimer;
+const sessionToast = document.getElementById('session-toast');
+
+function resetInactivityTimer() {
+    clearTimeout(warningTimer);
+    clearTimeout(logoutTimer);
+    sessionToast.classList.remove('visible');
+
+    warningTimer = setTimeout(() => {
+        sessionToast.classList.add('visible');
+    }, WARNING_MS);
+
+    logoutTimer = setTimeout(() => {
+        logout('inactive');
+    }, TIMEOUT_MS);
+}
+
+// Eventos que reinician el timer
+['mousemove', 'keydown', 'click', 'touchstart', 'scroll'].forEach(evt => {
+    document.addEventListener(evt, resetInactivityTimer, { passive: true });
+});
+
+// Botón logout
+document.getElementById('logout-btn').addEventListener('click', () => logout('manual'));
+
+// Arrancar el timer
+resetInactivityTimer();
+
+// ═══════════════════════════════════════════════════════════
+// CHATBOT — código original sin cambios
+// ═══════════════════════════════════════════════════════════
+
 const API_KEY = 'app-eApQYaNB74wAmRgNgWxytelf';
 const API_URL = 'https://dify.engineconsulting.com.ar/v1/chat-messages';
 const UPLOAD_URL = 'https://dify.engineconsulting.com.ar/v1/files/upload';
@@ -190,11 +284,9 @@ const attachName    = document.getElementById('attach-name');
 const attachIcon    = document.getElementById('attach-icon');
 const attachRemove  = document.getElementById('attach-remove');
 
-// ── State ──────────────────────────────────────────────
-let pendingFile = null;   // { file, type: 'image'|'document', localUrl }
-let conversationId = '';  // maintained across turns for Dify memory
+let pendingFile = null;
+let conversationId = '';
 
-// ── Attachment UI ──────────────────────────────────────
 function showPreview(file, type) {
     attachName.textContent = file.name;
     if (type === 'image') {
@@ -237,7 +329,6 @@ imageInput.addEventListener('change', () => {
     showPreview(file, 'image');
 });
 
-// ── Upload file to Dify, returns file_id ──────────────
 async function uploadFileToDify(file, type) {
     const formData = new FormData();
     formData.append('file', file);
@@ -251,10 +342,9 @@ async function uploadFileToDify(file, type) {
 
     if (!res.ok) throw new Error('File upload failed: ' + res.status);
     const data = await res.json();
-    return data.id; // Dify returns { id, ... }
+    return data.id;
 }
 
-// ── Append message bubble ──────────────────────────────
 function appendMessage(role, text, attachmentInfo) {
     const wrapper = document.createElement('div');
     wrapper.className = role === 'user'
@@ -291,7 +381,6 @@ function appendMessage(role, text, attachmentInfo) {
     return wrapper.querySelector('.message-content');
 }
 
-// Typing indicator bubble
 function appendTyping() {
     const wrapper = document.createElement('div');
     wrapper.className = 'flex flex-col items-start max-w-[85%]';
@@ -308,51 +397,41 @@ function removeTyping() {
     if (el) el.remove();
 }
 
-// ── Parse Dify answer (handles plain text AND JSON wrapper) ──
 function parseAnswer(raw) {
     const trimmed = raw.trim();
     if (!trimmed.startsWith('{') && !trimmed.startsWith('[')) return raw;
     try {
         const parsed = JSON.parse(trimmed);
-        // Pattern: { "messages": [{ "text": "...", ... }] }
         if (parsed.messages && Array.isArray(parsed.messages)) {
             return parsed.messages.map(m => m.text || '').join('\n');
         }
-        // Pattern: { "text": "..." }
         if (parsed.text) return parsed.text;
-        // Pattern: { "answer": "..." }
         if (parsed.answer) return parsed.answer;
-        // Fallback: stringify nicely
         return JSON.stringify(parsed, null, 2);
     } catch {
-        return raw; // not valid JSON, return as-is
+        return raw;
     }
 }
 
-// ── Send message ───────────────────────────────────────
 async function sendMessage() {
     const text = userInput.value.trim();
-    const fileSnapshot = pendingFile; // capture before clearing
+    const fileSnapshot = pendingFile;
 
     if (!text && !fileSnapshot) return;
 
     userInput.value = '';
     clearAttachment();
 
-    // Show user bubble
     const userAttachInfo = fileSnapshot
         ? { type: fileSnapshot.type, localUrl: fileSnapshot.localUrl, name: fileSnapshot.file?.name }
         : null;
     appendMessage('user', text || '(archivo adjunto)', userAttachInfo);
-
-    // Show typing indicator
     appendTyping();
 
     let fullResponse = '';
     let botMessageElement = null;
 
     try {
-        // Build request body
         const body = {
             inputs: {},
             query: text || 'Procesá el archivo adjunto.',
@@ -361,11 +440,10 @@ async function sendMessage() {
             conversation_id: conversationId || undefined
         };
 
-        // If there's a file, upload it first then attach
         if (fileSnapshot) {
             const fileId = await uploadFileToDify(fileSnapshot.file, fileSnapshot.type);
             body.files = [{
-                type: fileSnapshot.type,           // 'image' | 'document'
+                type: fileSnapshot.type,
                 transfer_method: 'local_file',
                 upload_file_id: fileId
             }];
@@ -399,25 +477,21 @@ async function sendMessage() {
                     if (!jsonString) continue;
                     const data = JSON.parse(jsonString);
 
-                    // Save conversation_id for memory across turns
                     if (data.conversation_id) conversationId = data.conversation_id;
 
                     if (data.event === 'message' || data.event === 'agent_message') {
                         fullResponse += data.answer || '';
 
-                        // First chunk: remove typing indicator and create bot bubble
                         if (!botMessageElement) {
                             removeTyping();
                             botMessageElement = appendMessage('bot', '');
                         }
 
-                        // Try to parse JSON wrapper; stream partial text otherwise
                         botMessageElement.innerText = parseAnswer(fullResponse);
                         chatCanvas.scrollTop = chatCanvas.scrollHeight;
                     }
 
                     if (data.event === 'message_end') {
-                        // Final pass: ensure fully parsed answer is shown
                         if (botMessageElement) {
                             botMessageElement.innerText = parseAnswer(fullResponse);
                         }
@@ -429,7 +503,6 @@ async function sendMessage() {
             }
         }
 
-        // Edge case: stream ended with no message events
         if (!botMessageElement) {
             removeTyping();
             appendMessage('bot', parseAnswer(fullResponse) || 'Sin respuesta.');
