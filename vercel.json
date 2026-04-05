@@ -1,10 +1,5 @@
 {
   "rewrites": [
     { "source": "/", "destination": "/login.html" }
-  ],
-  "functions": {
-    "api/*.js": {
-      "runtime": "nodejs20.x"
-    }
-  }
+  ]
 }
