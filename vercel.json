@@ -1,1 +1,5 @@
-To update your Production Deployment, push to the main branch.
+{
+  "rewrites": [
+    { "source": "/", "destination": "/login.html" }
+  ]
+}
