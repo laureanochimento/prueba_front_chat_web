@@ -48,7 +48,7 @@ body{min-height:100dvh;background-color:#ffffff}
     </div>
     <div id="cp-error" style="display:none;background:#fef2f2;border:1px solid #fecaca;color:#dc2626;border-radius:12px;padding:12px 16px;font-size:13px;margin-bottom:16px"></div>
     <div id="cp-success" style="display:none;background:#f0fdf4;border:1px solid #86efac;color:#16a34a;border-radius:12px;padding:12px 16px;font-size:13px;margin-bottom:16px"></div>
-    <div style="margin-bottom:16px"><label class="pass-label">Contrasena actual</label><input id="cp-current" class="pass-input" type="password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;"/></div>
+    <div style="margin-bottom:16px"><label class="pass-label">Contrasena actual</label><input id="cp-current" class="pass-input" type="password" placeholder="&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;&#9679;"/></div>
     <div style="margin-bottom:16px"><label class="pass-label">Nueva contrasena</label><input id="cp-new" class="pass-input" type="password" placeholder="Minimo 8 caracteres"/></div>
     <div style="margin-bottom:24px"><label class="pass-label">Confirmar nueva contrasena</label><input id="cp-confirm" class="pass-input" type="password" placeholder="Repeti la contrasena"/></div>
     <div style="display:flex;gap:12px">
@@ -100,131 +100,220 @@ body{min-height:100dvh;background-color:#ffffff}
 </div>
 
 <script>
-const SESSION_KEY='engine_token';
-const TIMEOUT_MS=15*60*1000;
-const WARNING_MS=13*60*1000;
+const SESSION_KEY = 'engine_token';
+const TIMEOUT_MS  = 15 * 60 * 1000;
+const WARNING_MS  = 13 * 60 * 1000;
 
-function logout(r){sessionStorage.removeItem(SESSION_KEY);sessionStorage.removeItem('engine_user');window.location.href='/login.html'+(r?'?msg='+r:'');}
-function validateToken(t){if(!t)return false;try{const[e]=t.split('.');const p=JSON.parse(atob(e));return Date.now()<=p.exp;}catch{return false;}}
-function getPayload(){try{const[e]=(sessionStorage.getItem(SESSION_KEY)||'').split('.');return JSON.parse(atob(e));}catch{return {};}}
+function logout(r) {
+  sessionStorage.removeItem(SESSION_KEY);
+  sessionStorage.removeItem('engine_user');
+  window.location.href = '/login.html' + (r ? '?msg=' + r : '');
+}
+function validateToken(t) {
+  if (!t) return false;
+  try { const [e] = t.split('.'); const p = JSON.parse(atob(e)); return Date.now() <= p.exp; }
+  catch { return false; }
+}
+function getPayload() {
+  try { const [e] = (sessionStorage.getItem(SESSION_KEY) || '').split('.'); return JSON.parse(atob(e)); }
+  catch { return {}; }
+}
 
-const tok=sessionStorage.getItem(SESSION_KEY);
-if(!validateToken(tok))logout('expired');
+const tok = sessionStorage.getItem(SESSION_KEY);
+if (!validateToken(tok)) logout('expired');
 
-let wT,lT;
-const sToast=document.getElementById('session-toast');
-function resetTimer(){clearTimeout(wT);clearTimeout(lT);sToast.classList.remove('visible');wT=setTimeout(()=>sToast.classList.add('visible'),WARNING_MS);lT=setTimeout(()=>logout('inactive'),TIMEOUT_MS);}
-['mousemove','keydown','click','touchstart','scroll'].forEach(e=>document.addEventListener(e,resetTimer,{passive:true}));
-document.getElementById('logout-btn').addEventListener('click',()=>logout('manual'));
+let wT, lT;
+const sToast = document.getElementById('session-toast');
+function resetTimer() {
+  clearTimeout(wT); clearTimeout(lT); sToast.classList.remove('visible');
+  wT = setTimeout(() => sToast.classList.add('visible'), WARNING_MS);
+  lT = setTimeout(() => logout('inactive'), TIMEOUT_MS);
+}
+['mousemove','keydown','click','touchstart','scroll'].forEach(e => document.addEventListener(e, resetTimer, { passive: true }));
+document.getElementById('logout-btn').addEventListener('click', () => logout('manual'));
 resetTimer();
 
 // --- Modal contrasena ---
-const passModal=document.getElementById('pass-modal-overlay');
-const cpErr=document.getElementById('cp-error');
-const cpOk=document.getElementById('cp-success');
-function openPass(){['cp-current','cp-new','cp-confirm'].forEach(id=>document.getElementById(id).value='');cpErr.style.display='none';cpOk.style.display='none';passModal.classList.add('open');}
-function closePass(){passModal.classList.remove('open');}
-document.getElementById('change-pass-btn').addEventListener('click',openPass);
-document.getElementById('mobile-settings-btn').addEventListener('click',openPass);
-document.getElementById('pass-modal-close').addEventListener('click',closePass);
-document.getElementById('cp-cancel').addEventListener('click',closePass);
-passModal.addEventListener('click',e=>{if(e.target===passModal)closePass();});
-document.getElementById('cp-save').addEventListener('click',async()=>{
-  cpErr.style.display='none';cpOk.style.display='none';
-  const cur=document.getElementById('cp-current').value;
-  const nw=document.getElementById('cp-new').value;
-  const conf=document.getElementById('cp-confirm').value;
-  const btn=document.getElementById('cp-save');
-  const sp=document.getElementById('cp-spinner');
-  const tx=document.getElementById('cp-save-text');
-  if(!cur||!nw||!conf){cpErr.textContent='Todos los campos son requeridos';cpErr.style.display='block';return;}
-  if(nw!==conf){cpErr.textContent='Las contrasenas no coinciden';cpErr.style.display='block';return;}
-  if(nw.length<8){cpErr.textContent='Minimo 8 caracteres';cpErr.style.display='block';return;}
-  btn.disabled=true;sp.classList.remove('hidden');tx.textContent='Guardando...';
-  try{
-    const r=await fetch('/api/change-password',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+sessionStorage.getItem(SESSION_KEY)},body:JSON.stringify({current_password:cur,new_password:nw})});
-    const d=await r.json();
-    if(r.ok){cpOk.textContent='Contrasena actualizada!';cpOk.style.display='block';['cp-current','cp-new','cp-confirm'].forEach(id=>document.getElementById(id).value='');setTimeout(closePass,2000);}
-    else{cpErr.textContent=d.error||'Error';cpErr.style.display='block';}
-  }catch{cpErr.textContent='Error de conexion';cpErr.style.display='block';}
-  finally{btn.disabled=false;sp.classList.add('hidden');tx.textContent='Guardar';}
+const passModal = document.getElementById('pass-modal-overlay');
+const cpErr = document.getElementById('cp-error');
+const cpOk  = document.getElementById('cp-success');
+
+function openPass() {
+  ['cp-current','cp-new','cp-confirm'].forEach(id => document.getElementById(id).value = '');
+  cpErr.style.display = 'none'; cpOk.style.display = 'none';
+  passModal.classList.add('open');
+}
+function closePass() { passModal.classList.remove('open'); }
+
+document.getElementById('change-pass-btn').addEventListener('click', openPass);
+document.getElementById('mobile-settings-btn').addEventListener('click', openPass);
+document.getElementById('pass-modal-close').addEventListener('click', closePass);
+document.getElementById('cp-cancel').addEventListener('click', closePass);
+passModal.addEventListener('click', e => { if (e.target === passModal) closePass(); });
+
+document.getElementById('cp-save').addEventListener('click', async () => {
+  cpErr.style.display = 'none'; cpOk.style.display = 'none';
+  const cur  = document.getElementById('cp-current').value;
+  const nw   = document.getElementById('cp-new').value;
+  const conf = document.getElementById('cp-confirm').value;
+  const btn  = document.getElementById('cp-save');
+  const sp   = document.getElementById('cp-spinner');
+  const tx   = document.getElementById('cp-save-text');
+  if (!cur || !nw || !conf) { cpErr.textContent = 'Todos los campos son requeridos'; cpErr.style.display = 'block'; return; }
+  if (nw !== conf) { cpErr.textContent = 'Las contrasenas no coinciden'; cpErr.style.display = 'block'; return; }
+  if (nw.length < 8) { cpErr.textContent = 'Minimo 8 caracteres'; cpErr.style.display = 'block'; return; }
+  btn.disabled = true; sp.classList.remove('hidden'); tx.textContent = 'Guardando...';
+  try {
+    const r = await fetch('/api/change-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + sessionStorage.getItem(SESSION_KEY) },
+      body: JSON.stringify({ current_password: cur, new_password: nw })
+    });
+    const d = await r.json();
+    if (r.ok) {
+      cpOk.textContent = 'Contrasena actualizada!'; cpOk.style.display = 'block';
+      ['cp-current','cp-new','cp-confirm'].forEach(id => document.getElementById(id).value = '');
+      setTimeout(closePass, 2000);
+    } else { cpErr.textContent = d.error || 'Error'; cpErr.style.display = 'block'; }
+  } catch { cpErr.textContent = 'Error de conexion'; cpErr.style.display = 'block'; }
+  finally { btn.disabled = false; sp.classList.add('hidden'); tx.textContent = 'Guardar'; }
 });
 
 // --- Chatbot ---
-const payload=getPayload();
-const API_KEY=payload.dify_api_key||'';
-const API_URL='https://dify.engineconsulting.com.ar/v1/chat-messages';
-const UPLOAD_URL='https://dify.engineconsulting.com.ar/v1/files/upload';
-const DIFY_USER=payload.username||'usuario_web';
+const payload     = getPayload();
+const API_KEY     = payload.dify_api_key || '';
+const API_URL     = 'https://dify.engineconsulting.com.ar/v1/chat-messages';
+const UPLOAD_URL  = 'https://dify.engineconsulting.com.ar/v1/files/upload';
+const DIFY_USER   = payload.username || 'usuario_web';
 
-const chatCanvas=document.getElementById('chat-canvas');
-const userInput=document.getElementById('user-input');
-const sendButton=document.getElementById('send-button');
-const pdfBtn=document.getElementById('pdf-btn');
-const imageBtn=document.getElementById('image-btn');
-const pdfInput=document.getElementById('pdf-input');
-const imageInput=document.getElementById('image-input');
-const attachPreview=document.getElementById('attachment-preview');
-const attachThumb=document.getElementById('attach-thumb');
-const attachName=document.getElementById('attach-name');
-const attachIcon=document.getElementById('attach-icon');
-const attachRemove=document.getElementById('attach-remove');
-let pendingFile=null,conversationId='';
+const chatCanvas   = document.getElementById('chat-canvas');
+const userInput    = document.getElementById('user-input');
+const sendButton   = document.getElementById('send-button');
+const pdfBtn       = document.getElementById('pdf-btn');
+const imageBtn     = document.getElementById('image-btn');
+const pdfInput     = document.getElementById('pdf-input');
+const imageInput   = document.getElementById('image-input');
+const attachPreview = document.getElementById('attachment-preview');
+const attachThumb  = document.getElementById('attach-thumb');
+const attachName   = document.getElementById('attach-name');
+const attachIcon   = document.getElementById('attach-icon');
+const attachRemove = document.getElementById('attach-remove');
+let pendingFile = null, conversationId = '';
 
-function showPreview(file,type){attachName.textContent=file.name;if(type==='image'){attachThumb.src=URL.createObjectURL(file);attachThumb.style.display='block';attachIcon.style.display='none';}else{attachThumb.style.display='none';attachIcon.style.display='inline-block';}attachPreview.classList.add('visible');}
-function clearAttachment(){pendingFile=null;attachPreview.classList.remove('visible');attachThumb.src='';attachThumb.style.display='none';attachIcon.style.display='inline-block';pdfInput.value='';imageInput.value='';}
-pdfBtn.addEventListener('click',()=>pdfInput.click());
-imageBtn.addEventListener('click',()=>imageInput.click());
-attachRemove.addEventListener('click',clearAttachment);
-pdfInput.addEventListener('change',()=>{const f=pdfInput.files[0];if(!f)return;pendingFile={file:f,type:'document',localUrl:null};showPreview(f,'document');});
-imageInput.addEventListener('change',()=>{const f=imageInput.files[0];if(!f)return;const u=URL.createObjectURL(f);pendingFile={file:f,type:'image',localUrl:u};showPreview(f,'image');});
+function showPreview(file, type) {
+  attachName.textContent = file.name;
+  if (type === 'image') { attachThumb.src = URL.createObjectURL(file); attachThumb.style.display = 'block'; attachIcon.style.display = 'none'; }
+  else { attachThumb.style.display = 'none'; attachIcon.style.display = 'inline-block'; }
+  attachPreview.classList.add('visible');
+}
+function clearAttachment() {
+  pendingFile = null; attachPreview.classList.remove('visible');
+  attachThumb.src = ''; attachThumb.style.display = 'none';
+  attachIcon.style.display = 'inline-block'; pdfInput.value = ''; imageInput.value = '';
+}
 
-async function uploadFileToDify(file,type){const fd=new FormData();fd.append('file',file);fd.append('user',DIFY_USER);const r=await fetch(UPLOAD_URL,{method:'POST',headers:{'Authorization':'Bearer '+API_KEY},body:fd});if(!r.ok)throw new Error('Upload failed');const d=await r.json();return d.id;}
+pdfBtn.addEventListener('click', () => pdfInput.click());
+imageBtn.addEventListener('click', () => imageInput.click());
+attachRemove.addEventListener('click', clearAttachment);
+pdfInput.addEventListener('change', () => {
+  const f = pdfInput.files[0]; if (!f) return;
+  pendingFile = { file: f, type: 'document', localUrl: null }; showPreview(f, 'document');
+});
+imageInput.addEventListener('change', () => {
+  const f = imageInput.files[0]; if (!f) return;
+  const u = URL.createObjectURL(f);
+  pendingFile = { file: f, type: 'image', localUrl: u }; showPreview(f, 'image');
+});
 
-function appendMessage(role,text,att){
-  const w=document.createElement('div');
-  w.className=role==='user'?'flex flex-col items-end self-end max-w-[85%]':'flex flex-col items-start max-w-[85%]';
-  const bc=role==='user'?'user-bubble':'bot-bubble';
-  let aHTML='';
-  if(att){if(att.type==='image'&&att.localUrl)aHTML='<img src="'+att.localUrl+'" class="bubble-image" alt="img"/>';else if(att.type==='document')aHTML='<div class="bubble-pdf"><span class="material-symbols-outlined" style="font-size:16px">picture_as_pdf</span><span>'+att.name+'</span></div>';}
-  w.innerHTML='<div class="'+bc+' px-6 py-4 rounded-xl shadow-sm">'+aHTML+'<p class="font-body '+(role==='user'?'font-medium':'font-light')+' text-lg leading-relaxed message-content">'+text+'</p></div><span class="mt-2 text-[10px] font-medium uppercase tracking-[0.05em] text-slate-500 font-label">'+(role==='user'?'YOU':'ENGINE')+' • NOW</span>';
-  chatCanvas.appendChild(w);chatCanvas.scrollTop=chatCanvas.scrollHeight;
+async function uploadFileToDify(file, type) {
+  const fd = new FormData(); fd.append('file', file); fd.append('user', DIFY_USER);
+  const r = await fetch(UPLOAD_URL, { method: 'POST', headers: { 'Authorization': 'Bearer ' + API_KEY }, body: fd });
+  if (!r.ok) throw new Error('Upload failed');
+  const d = await r.json(); return d.id;
+}
+
+function appendMessage(role, text, att) {
+  const w = document.createElement('div');
+  w.className = role === 'user' ? 'flex flex-col items-end self-end max-w-[85%]' : 'flex flex-col items-start max-w-[85%]';
+  const bc = role === 'user' ? 'user-bubble' : 'bot-bubble';
+  let aHTML = '';
+  if (att) {
+    if (att.type === 'image' && att.localUrl) aHTML = '<img src="' + att.localUrl + '" class="bubble-image" alt="img"/>';
+    else if (att.type === 'document') aHTML = '<div class="bubble-pdf"><span class="material-symbols-outlined" style="font-size:16px">picture_as_pdf</span><span>' + att.name + '</span></div>';
+  }
+  w.innerHTML = '<div class="' + bc + ' px-6 py-4 rounded-xl shadow-sm">' + aHTML + '<p class="font-body ' + (role === 'user' ? 'font-medium' : 'font-light') + ' text-lg leading-relaxed message-content">' + text + '</p></div><span class="mt-2 text-[10px] font-medium uppercase tracking-[0.05em] text-slate-500 font-label">' + (role === 'user' ? 'YOU' : 'ENGINE') + ' \u2022 NOW</span>';
+  chatCanvas.appendChild(w); chatCanvas.scrollTop = chatCanvas.scrollHeight;
   return w.querySelector('.message-content');
 }
-function appendTyping(){const w=document.createElement('div');w.className='flex flex-col items-start max-w-[85%]';w.id='typing-indicator';w.innerHTML='<div class="bot-bubble px-6 py-4 rounded-xl shadow-sm flex items-center gap-1" style="min-width:60px"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>';chatCanvas.appendChild(w);chatCanvas.scrollTop=chatCanvas.scrollHeight;}
-function removeTyping(){const e=document.getElementById('typing-indicator');if(e)e.remove();}
-function parseAnswer(raw){const t=raw.trim();if(!t.startsWith('{')&&!t.startsWith('['))return raw;try{const p=JSON.parse(t);if(p.messages&&Array.isArray(p.messages))return p.messages.map(m=>m.text||'').join('
-');if(p.text)return p.text;if(p.answer)return p.answer;return JSON.stringify(p,null,2);}catch{return raw;}}
 
-async function sendMessage(){
-  const text=userInput.value.trim();const fs=pendingFile;
-  if(!text&&!fs)return;
-  userInput.value='';clearAttachment();
-  const uAtt=fs?{type:fs.type,localUrl:fs.localUrl,name:fs.file?.name}:null;
-  appendMessage('user',text||'(archivo adjunto)',uAtt);appendTyping();
-  let full='',bot=null;
-  try{
-    const body={inputs:{},query:text||'Procesa el archivo adjunto.',response_mode:'streaming',user:DIFY_USER,conversation_id:conversationId||undefined};
-    if(fs){const fid=await uploadFileToDify(fs.file,fs.type);body.files=[{type:fs.type,transfer_method:'local_file',upload_file_id:fid}];}
-    const resp=await fetch(API_URL,{method:'POST',headers:{'Authorization':'Bearer '+API_KEY,'Content-Type':'application/json'},body:JSON.stringify(body)});
-    if(!resp.ok)throw new Error('API error '+resp.status);
-    const reader=resp.body.getReader();const dec=new TextDecoder();
-    while(true){const{done,value}=await reader.read();if(done)break;
-      for(const line of dec.decode(value,{stream:true}).split('
-')){
-        if(!line.trim().startsWith('data:'))continue;
-        try{const js=line.trim().slice(5).trim();if(!js)continue;const d=JSON.parse(js);
-          if(d.conversation_id)conversationId=d.conversation_id;
-          if(d.event==='message'||d.event==='agent_message'){full+=d.answer||'';if(!bot){removeTyping();bot=appendMessage('bot','');}bot.innerText=parseAnswer(full);chatCanvas.scrollTop=chatCanvas.scrollHeight;}
-          if(d.event==='message_end'&&bot)bot.innerText=parseAnswer(full);
-        }catch(e){console.error(e);}
+function appendTyping() {
+  const w = document.createElement('div');
+  w.className = 'flex flex-col items-start max-w-[85%]'; w.id = 'typing-indicator';
+  w.innerHTML = '<div class="bot-bubble px-6 py-4 rounded-xl shadow-sm flex items-center gap-1" style="min-width:60px"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>';
+  chatCanvas.appendChild(w); chatCanvas.scrollTop = chatCanvas.scrollHeight;
+}
+function removeTyping() { const e = document.getElementById('typing-indicator'); if (e) e.remove(); }
+
+function parseAnswer(raw) {
+  const t = raw.trim();
+  if (!t.startsWith('{') && !t.startsWith('[')) return raw;
+  try {
+    const p = JSON.parse(t);
+    if (p.messages && Array.isArray(p.messages)) return p.messages.map(m => m.text || '').join('\n');
+    if (p.text) return p.text;
+    if (p.answer) return p.answer;
+    return JSON.stringify(p, null, 2);
+  } catch { return raw; }
+}
+
+async function sendMessage() {
+  const text = userInput.value.trim(); const fs = pendingFile;
+  if (!text && !fs) return;
+  userInput.value = ''; clearAttachment();
+  const uAtt = fs ? { type: fs.type, localUrl: fs.localUrl, name: fs.file?.name } : null;
+  appendMessage('user', text || '(archivo adjunto)', uAtt); appendTyping();
+  let full = '', bot = null;
+  try {
+    const body = { inputs: {}, query: text || 'Procesa el archivo adjunto.', response_mode: 'streaming', user: DIFY_USER, conversation_id: conversationId || undefined };
+    if (fs) {
+      const fid = await uploadFileToDify(fs.file, fs.type);
+      body.files = [{ type: fs.type, transfer_method: 'local_file', upload_file_id: fid }];
+    }
+    const resp = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + API_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (!resp.ok) throw new Error('API error ' + resp.status);
+    const reader = resp.body.getReader(); const dec = new TextDecoder();
+    while (true) {
+      const { done, value } = await reader.read(); if (done) break;
+      for (const line of dec.decode(value, { stream: true }).split('\n')) {
+        if (!line.trim().startsWith('data:')) continue;
+        try {
+          const js = line.trim().slice(5).trim(); if (!js) continue;
+          const d = JSON.parse(js);
+          if (d.conversation_id) conversationId = d.conversation_id;
+          if (d.event === 'message' || d.event === 'agent_message') {
+            full += d.answer || '';
+            if (!bot) { removeTyping(); bot = appendMessage('bot', ''); }
+            bot.innerText = parseAnswer(full); chatCanvas.scrollTop = chatCanvas.scrollHeight;
+          }
+          if (d.event === 'message_end' && bot) bot.innerText = parseAnswer(full);
+        } catch (e) { console.error(e); }
       }
     }
-    if(!bot){removeTyping();appendMessage('bot',parseAnswer(full)||'Sin respuesta.');}
-  }catch(err){console.error(err);removeTyping();if(!bot)bot=appendMessage('bot','');bot.innerText='Hubo un error en la conexion. Por favor, intenta de nuevo.';bot.classList.add('text-red-400');}
+    if (!bot) { removeTyping(); appendMessage('bot', parseAnswer(full) || 'Sin respuesta.'); }
+  } catch (err) {
+    console.error(err); removeTyping();
+    if (!bot) bot = appendMessage('bot', '');
+    bot.innerText = 'Hubo un error en la conexion. Por favor, intenta de nuevo.';
+    bot.classList.add('text-red-400');
+  }
 }
-sendButton.addEventListener('click',sendMessage);
-userInput.addEventListener('keypress',e=>{if(e.key==='Enter')sendMessage();});
+
+sendButton.addEventListener('click', sendMessage);
+userInput.addEventListener('keypress', e => { if (e.key === 'Enter') sendMessage(); });
 </script>
 </body>
 </html>
