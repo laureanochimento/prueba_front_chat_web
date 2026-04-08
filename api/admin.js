@@ -6,6 +6,19 @@ const crypto = require('crypto');
 const SECRET = process.env.SESSION_SECRET || 'engine-secret-2024';
 const DB_PATH = path.join(process.cwd(), 'data', 'users.json');
 
+// -- Rate limiting (solo login admin) --
+const adminRateMap = {};
+const MAX_ATTEMPTS = 5;
+const WINDOW_MS = 15 * 60 * 1000;
+function checkAdminRL(ip) {
+  const now = Date.now(); const r = adminRateMap[ip];
+  if (!r || now - r.firstAttempt > WINDOW_MS) { adminRateMap[ip] = { count: 0, firstAttempt: now }; return { blocked: false }; }
+  if (r.count >= MAX_ATTEMPTS) { const min = Math.ceil((WINDOW_MS - (now - r.firstAttempt)) / 60000); return { blocked: true, retryAfter: min }; }
+  return { blocked: false, remaining: MAX_ATTEMPTS - r.count };
+}
+function failAdminRL(ip) { const now = Date.now(); const r = adminRateMap[ip]; if (!r || now - r.firstAttempt > WINDOW_MS) adminRateMap[ip] = { count: 1, firstAttempt: now }; else adminRateMap[ip].count += 1; }
+function clearAdminRL(ip) { delete adminRateMap[ip]; }
+
 // ── DB helpers ─────────────────────────────────────────────────────
 function readDB() {
   return JSON.parse(fs.readFileSync(DB_PATH, 'utf8'));
@@ -52,19 +65,22 @@ module.exports = async (req, res) => {
   // ── POST /api/admin?action=login ───────────────────────────────
   if (action === 'login') {
     if (req.method !== 'POST') return res.status(405).end();
+    const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 'unknown';
+    const rl = checkAdminRL(ip);
+    if (rl.blocked) return res.status(429).json({ error: `Demasiados intentos. Reintenta en ${rl.retryAfter} minuto${rl.retryAfter === 1 ? '' : 's'}.` });
     const { username, password } = req.body;
-    if (!username || !password)
-      return res.status(400).json({ error: 'Campos requeridos' });
-
+    if (!username || !password) return res.status(400).json({ error: 'Campos requeridos' });
     let db;
     try { db = readDB(); } catch { return res.status(500).json({ error: 'Error leyendo DB' }); }
-
     const admin = db.admins.find(a => a.username.toLowerCase() === username.toLowerCase().trim());
-    if (!admin) return res.status(401).json({ error: 'Credenciales incorrectas' });
-
+    if (!admin) { failAdminRL(ip); return res.status(401).json({ error: 'Credenciales incorrectas' }); }
     const valid = await bcrypt.compare(password, admin.password);
-    if (!valid) return res.status(401).json({ error: 'Credenciales incorrectas' });
-
+    if (!valid) {
+      failAdminRL(ip);
+      const rem = MAX_ATTEMPTS - (adminRateMap[ip]?.count || 0);
+      return res.status(401).json({ error: rem > 0 ? `Credenciales incorrectas. Te quedan ${rem} intento${rem===1?'':'s'}.` : 'Demasiados intentos. Reintenta en 15 minutos.' });
+    }
+    clearAdminRL(ip);
     const token = generateAdminToken(admin.username);
     return res.status(200).json({ token, username: admin.username });
   }
@@ -159,6 +175,9 @@ module.exports = async (req, res) => {
     try { writeDB(db); } catch { return res.status(500).json({ error: 'Error guardando DB' }); }
     return res.status(200).json({ ok: true, message: 'Contraseña de admin actualizada' });
   }
+
+  return res.status(400).json({ error: 'Acción no reconocida' });
+};
 
   return res.status(400).json({ error: 'Acción no reconocida' });
 };
